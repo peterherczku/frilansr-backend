@@ -1,0 +1,55 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Listing {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  type        JobType
+  duration    Int
+  date        DateTime
+  latitude    Float
+  longitude   Float
+  salary      Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String
+  image       String
+
+  job Job?
+}
+
+model Job {
+  id        String    @id @default(cuid())
+  listing   Listing   @relation(fields: [listingId], references: [id])
+  listingId String    @unique
+  workerId  String
+  status    JobStatus
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+enum JobType {
+  DOG_WALKING
+}
+
+enum JobStatus {
+  WAITING_FOR_LISTER
+  DECLINED_BY_LISTER
+  WAITING_FOR_WORKER
+  IN_PROGRESS
+  COMPLETED
+}
