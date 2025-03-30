@@ -1,5 +1,5 @@
 import { Router } from "express";
-import listingRoutes from "./listing.route.js";
+import listingRoutes from "./listing/listing.route.js";
 import { requireAuth } from "@clerk/express";
 
 const router = Router();

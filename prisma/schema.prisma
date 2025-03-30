@@ -15,19 +15,20 @@ datasource db {
 }
 
 model Listing {
-  id          String   @id @default(cuid())
-  title       String
-  description String
-  type        JobType
-  duration    Int
-  date        DateTime
-  latitude    Float
-  longitude   Float
-  salary      Int
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id          String        @id @default(cuid())
+  title       String?
+  description String?
+  type        JobType?
+  duration    Int?
+  date        DateTime?
+  latitude    Float?
+  longitude   Float?
+  salary      Int?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
   userId      String
-  image       String
+  image       String?
+  status      ListingStatus @default(DRAFT)
 
   job Job?
 }
@@ -52,4 +53,9 @@ enum JobStatus {
   WAITING_FOR_WORKER
   IN_PROGRESS
   COMPLETED
+}
+
+enum ListingStatus {
+  DRAFT
+  PUBLISHED
 }
