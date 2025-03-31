@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const jobTypeEnum = z
+export const jobTypeEnum = z
 	.enum(["DOG_WALKING"], {
 		message: "Invalid job type",
 	})

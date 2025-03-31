@@ -1,8 +1,8 @@
 import { clerkClient } from "@clerk/express";
 import { Listings } from "../models/listing.js";
 import { AppError } from "../lib/error.js";
-import { Prisma } from "@prisma/client";
-import { updateListingSchema } from "../lib/validators.js";
+import { Listing } from "@prisma/client";
+import { jobTypeEnum, updateListingSchema } from "../lib/validators.js";
 
 export async function getListing(id: string) {
 	const listing = await Listings.getListing(id);
@@ -23,6 +23,7 @@ export async function getListing(id: string) {
 		user: {
 			id: user.id,
 			name: user.fullName,
+			imageUrl: user.imageUrl,
 		},
 	};
 }
@@ -82,4 +83,74 @@ export async function publishListing(userId: string, listingId: string) {
 	}
 	const listing = await Listings.publishListing(userId, listingId);
 	return listing;
+}
+
+export async function searchListing(
+	query: string,
+	category: string | string[] | undefined,
+	limit: string,
+	page: string
+) {
+	const result = jobTypeEnum.safeParse(category);
+	const limitNum = Number(limit);
+	const pageNum = Number(page);
+	if (isNaN(limitNum)) {
+		throw new AppError("Limit must be an integer", 400);
+	}
+	if (isNaN(pageNum)) {
+		throw new AppError("Page must be an integer", 400);
+	}
+	if (!result.success) {
+		throw new AppError("Invalid category", 400);
+	}
+	const listings = await Listings.searchListings(
+		query,
+		result.data,
+		pageNum,
+		limitNum
+	);
+	if (!listings) {
+		throw new AppError("Listings not found", 404);
+	}
+	const listingsWithUser = await extendWithUser(listings);
+	return listingsWithUser;
+}
+
+export async function nearbyListings(
+	longitude: string,
+	latitude: string,
+	radius: number
+) {
+	const longitudeNum = Number(longitude);
+	const latitudeNum = Number(latitude);
+	if (isNaN(longitudeNum) || isNaN(latitudeNum)) {
+		throw new AppError("Longitude and latitude must be numbers", 400);
+	}
+	const listings = await Listings.nearbyListings(
+		longitudeNum,
+		latitudeNum,
+		radius
+	);
+	if (!listings) {
+		throw new AppError("Listings not found", 404);
+	}
+	const listingsWithUser = await extendWithUser(listings);
+	return listingsWithUser;
+}
+
+async function extendWithUser(listings: Listing[]) {
+	const listingsWithUser = await Promise.all(
+		listings.map(async (listing) => {
+			const user = await clerkClient.users.getUser(listing.userId);
+			return {
+				...listing,
+				user: {
+					id: user.id,
+					name: user.fullName,
+					imageUrl: user.imageUrl,
+				},
+			};
+		})
+	);
+	return listingsWithUser;
 }
