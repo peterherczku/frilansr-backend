@@ -111,9 +111,20 @@ const Listings = {
 				) AS distance
 				FROM "Listing"
 			) AS subquery
-			WHERE distance < ${radius}
+			WHERE distance < ${radius} AND status = 'PUBLISHED'
 			ORDER BY distance
 		`;
+	},
+	async featuredListings() {
+		return await prisma.listing.findMany({
+			where: {
+				status: "PUBLISHED",
+			},
+			take: 5,
+			orderBy: {
+				date: "desc",
+			},
+		});
 	},
 };
 

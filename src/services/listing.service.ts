@@ -9,23 +9,7 @@ export async function getListing(id: string) {
 	if (!listing) {
 		throw new AppError("Listing not found", 404);
 	}
-	const user = await clerkClient.users.getUser(listing.userId);
-	return {
-		id: listing.id,
-		title: listing.title,
-		description: listing.description,
-		salary: listing.salary,
-		location: {
-			longitude: listing.longitude,
-			latitude: listing.latitude,
-		},
-		createdAt: listing.createdAt,
-		user: {
-			id: user.id,
-			name: user.fullName,
-			imageUrl: user.imageUrl,
-		},
-	};
+	return await reduceListing(listing);
 }
 
 export async function createListing(userId: string) {
@@ -57,7 +41,7 @@ export async function updateListing(
 	if (!listing) {
 		throw new AppError("Listing not found", 404);
 	}
-	return listing;
+	return await reduceListing(listing);
 }
 
 export async function publishListing(userId: string, listingId: string) {
@@ -82,7 +66,7 @@ export async function publishListing(userId: string, listingId: string) {
 		throw new AppError("Please fill all the fields", 400);
 	}
 	const listing = await Listings.publishListing(userId, listingId);
-	return listing;
+	return reduceListing(listing);
 }
 
 export async function searchListing(
@@ -138,19 +122,40 @@ export async function nearbyListings(
 	return listingsWithUser;
 }
 
+export async function featuredListings() {
+	const listings = await Listings.featuredListings();
+	if (!listings) {
+		throw new AppError("Listings not found", 404);
+	}
+	const listingsWithUser = await extendWithUser(listings);
+	return listingsWithUser;
+}
+
+async function reduceListing(listing: Listing) {
+	const user = await clerkClient.users.getUser(listing.userId);
+	return {
+		id: listing.id,
+		title: listing.title,
+		description: listing.description,
+		salary: listing.salary,
+		location: {
+			longitude: listing.longitude,
+			latitude: listing.latitude,
+		},
+		createdAt: listing.createdAt,
+		type: listing.type,
+		image: listing.image,
+		date: listing.date,
+		duration: listing.duration,
+		user: {
+			id: user.id,
+			name: user.fullName,
+			imageUrl: user.imageUrl,
+		},
+	};
+}
+
 async function extendWithUser(listings: Listing[]) {
-	const listingsWithUser = await Promise.all(
-		listings.map(async (listing) => {
-			const user = await clerkClient.users.getUser(listing.userId);
-			return {
-				...listing,
-				user: {
-					id: user.id,
-					name: user.fullName,
-					imageUrl: user.imageUrl,
-				},
-			};
-		})
-	);
+	const listingsWithUser = await Promise.all(listings.map(reduceListing));
 	return listingsWithUser;
 }

@@ -59,3 +59,16 @@ export async function nearbyListings(
 		next(error);
 	}
 }
+
+export async function featuredListings(
+	req: Request,
+	res: Response,
+	next: NextFunction
+) {
+	try {
+		const listings = await listingService.featuredListings();
+		res.status(200).json(listings);
+	} catch (error) {
+		next(error);
+	}
+}
