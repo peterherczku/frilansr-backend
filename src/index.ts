@@ -2,7 +2,7 @@ import express from "express";
 import { createServer } from "http";
 import app from "./app.js"; // imported from app.ts
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 80;
 const server = createServer(app);
 
 server.listen(PORT, () => {
