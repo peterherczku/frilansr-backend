@@ -1,10 +1,17 @@
 import { z } from "zod";
 
+export const userRoleEnum = z.enum(["LISTER", "WORKER"], {
+	message: "Invalid role",
+});
 export const jobTypeEnum = z
 	.enum(["DOG_WALKING"], {
 		message: "Invalid job type",
 	})
 	.optional();
+
+export const updateUserRoleSchema = z.object({
+	role: userRoleEnum,
+});
 
 export const updateListingSchema = z.object({
 	title: z
