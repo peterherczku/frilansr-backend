@@ -7,6 +7,7 @@ import { errorHandler } from "./middlewares/errorMiddleware.js";
 const app = express();
 
 import { createClerkClient } from "@clerk/backend";
+import { logHandler } from "./middlewares/loggingMiddleware.js";
 
 const clerkClient = createClerkClient({
 	secretKey: process.env.CLERK_SECRET_KEY,
@@ -16,7 +17,7 @@ const clerkClient = createClerkClient({
 app.use(express.json());
 app.use(clerkMiddleware({ clerkClient, debug: true, enableHandshake: true }));
 
+app.use(logHandler);
 app.use("/api", routes); // attach all routes
 app.use(errorHandler);
-
 export default app;
