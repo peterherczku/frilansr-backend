@@ -14,20 +14,21 @@ datasource db {
 }
 
 model Listing {
-  id          String        @id @default(cuid())
-  title       String?
-  description String?
-  type        JobType?
-  duration    Int?
-  date        DateTime?
-  latitude    Float?
-  longitude   Float?
-  salary      Int?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  userId      String
-  image       String?
-  status      ListingStatus @default(DRAFT)
+  id           String        @id @default(cuid())
+  title        String?
+  description  String?
+  type         JobType?
+  duration     Int?
+  date         DateTime?
+  latitude     Float?
+  longitude    Float?
+  salary       Int?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  userId       String
+  image        String?
+  status       ListingStatus @default(DRAFT)
+  applications Application[]
 
   job Job?
 }
@@ -40,6 +41,17 @@ model Job {
   status    JobStatus
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+}
+
+model Application {
+  id        String            @id @default(cuid())
+  listing   Listing           @relation(fields: [listingId], references: [id])
+  listingId String
+  userId    String
+  message   String?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  status    ApplicationStatus @default(PENDING)
 }
 
 enum JobType {
@@ -57,4 +69,10 @@ enum JobStatus {
 enum ListingStatus {
   DRAFT
   PUBLISHED
+}
+
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
 }
