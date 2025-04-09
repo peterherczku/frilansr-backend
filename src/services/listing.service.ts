@@ -9,6 +9,7 @@ import {
 	updateListingSchema,
 } from "../lib/validators.js";
 import app from "../app.js";
+import { reduceJob } from "./job.service.js";
 
 export async function getListing(id: string) {
 	const listing = await Listings.getListing(id);
@@ -194,15 +195,15 @@ export async function selectApplication(
 		throw new AppError("Application not found", 404);
 	}
 	const job = await Listings.selectApplication(application.userId, listingId);
-	const listingWithUser = reduceListing(job.listing);
-	const jobWithUser = reduceJob(job);
+	const listingWithUser = await reduceListing(job.listing);
+	const jobWithUser = await reduceJob(job);
 	return {
 		...jobWithUser,
 		listing: listingWithUser,
 	};
 }
 
-async function reduceListing(listing: Listing) {
+export async function reduceListing(listing: Listing) {
 	const user = await clerkClient.users.getUser(listing.userId);
 	return {
 		id: listing.id,
@@ -248,15 +249,4 @@ async function extendApplicationsWithUser(applications: Application[]) {
 		applications.map(reduceApplication)
 	);
 	return applicationsWithUser;
-}
-
-async function reduceJob(job: Job) {
-	const user = await clerkClient.users.getUser(job.workerId);
-	return {
-		worker: {
-			id: user.id,
-			name: user.fullName,
-			imageUrl: user.imageUrl,
-		},
-	};
 }

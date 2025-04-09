@@ -9,7 +9,7 @@ export async function getListing(
 ) {
 	try {
 		const listing = await listingService.getListing(req.params["id"]);
-		res.status(201).json({ listing });
+		res.status(200).json({ listing });
 	} catch (error) {
 		next(error);
 	}
@@ -79,7 +79,7 @@ export async function getApplications(
 			userId,
 			req.params["id"]
 		);
-		res.status(201).json({ applications });
+		res.status(200).json({ applications });
 	} catch (error) {
 		next(error);
 	}
