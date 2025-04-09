@@ -1,4 +1,3 @@
-import express from "express";
 import { createServer } from "http";
 import app from "./app.js"; // imported from app.ts
 

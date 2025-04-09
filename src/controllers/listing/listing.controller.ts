@@ -2,8 +2,6 @@ import { NextFunction, Request, Response } from "express";
 
 import * as listingService from "../../services/listing.service.js";
 import { getAuth } from "@clerk/express";
-import { JobType } from "@prisma/client";
-import { jobTypeEnum } from "../../lib/validators.js";
 import { AppError } from "../../lib/error.js";
 
 export async function createListing(

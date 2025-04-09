@@ -1,9 +1,5 @@
 import { Request, Response, NextFunction, RequestHandler } from "express";
 import * as listingService from "../../services/listing.service.js";
-import {
-	applyForListingSchema,
-	updateListingSchema,
-} from "../../lib/validators.js";
 import { getAuth } from "@clerk/express";
 
 export async function getListing(
