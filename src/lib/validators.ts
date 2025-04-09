@@ -9,6 +9,10 @@ export const jobTypeEnum = z
 	})
 	.optional();
 
+export const applyForListingSchema = z.object({
+	message: z.string().optional(),
+});
+
 export const updateUserRoleSchema = z.object({
 	role: userRoleEnum,
 });
@@ -51,4 +55,8 @@ export const updateListingSchema = z.object({
 		)
 		.optional(),
 	image: z.string().optional(),
+});
+
+export const selectApplicationSchema = z.object({
+	applicationId: z.string(),
 });

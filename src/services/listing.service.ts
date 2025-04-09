@@ -1,8 +1,14 @@
 import { clerkClient } from "@clerk/express";
 import { Listings } from "../models/listing.js";
 import { AppError } from "../lib/error.js";
-import { Listing } from "@prisma/client";
-import { jobTypeEnum, updateListingSchema } from "../lib/validators.js";
+import { Application, Job, Listing } from "@prisma/client";
+import {
+	applyForListingSchema,
+	jobTypeEnum,
+	selectApplicationSchema,
+	updateListingSchema,
+} from "../lib/validators.js";
+import app from "../app.js";
 
 export async function getListing(id: string) {
 	const listing = await Listings.getListing(id);
@@ -131,6 +137,71 @@ export async function featuredListings() {
 	return listingsWithUser;
 }
 
+export async function applyForListing(
+	userId: string,
+	listingId: string,
+	data: any
+) {
+	const hasApplied = await Listings.hasApplied(userId, listingId);
+	if (hasApplied) {
+		throw new AppError("You have already applied for this listing", 400);
+	}
+	const result = applyForListingSchema.safeParse(data);
+	if (!result.success) {
+		if (result.error.issues[0]) {
+			throw new AppError(result.error.issues[0].message, 400);
+		} else {
+			throw new AppError("Invalid data", 400);
+		}
+	}
+	await Listings.applyForListing(userId, listingId, result.data.message);
+	return true;
+}
+
+export async function getApplications(userId: string, listingId: string) {
+	const listing = await Listings.getListing(listingId);
+	if (listing.userId !== userId) {
+		throw new AppError("You are not the owner of this listing", 403);
+	}
+	const applications = await Listings.getApplications(listingId);
+	if (!applications) {
+		throw new AppError("Applications not found", 404);
+	}
+	const applicationsWithUser = await extendApplicationsWithUser(applications);
+	return applicationsWithUser;
+}
+
+export async function selectApplication(
+	userId: string,
+	listingId: string,
+	data: any
+) {
+	const result = selectApplicationSchema.safeParse(data);
+	if (!result.success) {
+		if (result.error.issues[0]) {
+			throw new AppError(result.error.issues[0].message, 400);
+		} else {
+			throw new AppError("Invalid data", 400);
+		}
+	}
+	const applicationId = result.data.applicationId;
+	const listing = await Listings.getListing(listingId);
+	if (listing.userId !== userId) {
+		throw new AppError("You are not the owner of this listing", 400);
+	}
+	const application = await Listings.getApplication(applicationId);
+	if (application.listingId !== listingId) {
+		throw new AppError("Application not found", 404);
+	}
+	const job = await Listings.selectApplication(application.userId, listingId);
+	const listingWithUser = reduceListing(job.listing);
+	const jobWithUser = reduceJob(job);
+	return {
+		...jobWithUser,
+		listing: listingWithUser,
+	};
+}
+
 async function reduceListing(listing: Listing) {
 	const user = await clerkClient.users.getUser(listing.userId);
 	return {
@@ -158,4 +229,34 @@ async function reduceListing(listing: Listing) {
 async function extendWithUser(listings: Listing[]) {
 	const listingsWithUser = await Promise.all(listings.map(reduceListing));
 	return listingsWithUser;
+}
+
+async function reduceApplication(application: Application) {
+	const user = await clerkClient.users.getUser(application.userId);
+	return {
+		user: {
+			id: user.id,
+			name: user.fullName,
+			imageUrl: user.imageUrl,
+		},
+		message: application.message,
+	};
+}
+
+async function extendApplicationsWithUser(applications: Application[]) {
+	const applicationsWithUser = await Promise.all(
+		applications.map(reduceApplication)
+	);
+	return applicationsWithUser;
+}
+
+async function reduceJob(job: Job) {
+	const user = await clerkClient.users.getUser(job.workerId);
+	return {
+		worker: {
+			id: user.id,
+			name: user.fullName,
+			imageUrl: user.imageUrl,
+		},
+	};
 }

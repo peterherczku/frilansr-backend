@@ -79,6 +79,9 @@ const Listings = {
 					},
 				},
 			],
+			job: {
+				is: null,
+			},
 		};
 		if (category) {
 			where.type = {
@@ -111,7 +114,7 @@ const Listings = {
 				) AS distance
 				FROM "Listing"
 			) AS subquery
-			WHERE distance < ${radius} AND status = 'PUBLISHED'
+			WHERE distance < ${radius} AND status = 'PUBLISHED AND job IS NULL'
 			ORDER BY distance
 		`;
 	},
@@ -119,10 +122,60 @@ const Listings = {
 		return await prisma.listing.findMany({
 			where: {
 				status: "PUBLISHED",
+				job: {
+					is: null,
+				},
 			},
 			take: 5,
 			orderBy: {
 				date: "desc",
+			},
+		});
+	},
+	async applyForListing(
+		workedUserId: string,
+		listingId: string,
+		message?: string
+	) {
+		return await prisma.application.create({
+			data: {
+				listingId,
+				userId: workedUserId,
+				message,
+			},
+		});
+	},
+	async hasApplied(userId: string, listingId: string) {
+		const application = await prisma.application.findFirst({
+			where: {
+				listingId,
+				userId,
+			},
+		});
+		return !!application;
+	},
+	async getApplication(applicationId: string) {
+		return await prisma.application.findFirst({
+			where: {
+				id: applicationId,
+			},
+		});
+	},
+	async getApplications(listingId: string) {
+		return await prisma.application.findMany({
+			where: {
+				listingId,
+			},
+		});
+	},
+	async selectApplication(workerId: string, listingId: string) {
+		return await prisma.job.create({
+			data: {
+				listingId,
+				workerId: workerId,
+			},
+			include: {
+				listing: true,
 			},
 		});
 	},

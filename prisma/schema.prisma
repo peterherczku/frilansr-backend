@@ -38,7 +38,7 @@ model Job {
   listing   Listing   @relation(fields: [listingId], references: [id])
   listingId String    @unique
   workerId  String
-  status    JobStatus
+  status    JobStatus @default(WAITING_FOR_WORKER)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 }
@@ -59,8 +59,6 @@ enum JobType {
 }
 
 enum JobStatus {
-  WAITING_FOR_LISTER
-  DECLINED_BY_LISTER
   WAITING_FOR_WORKER
   IN_PROGRESS
   COMPLETED
