@@ -1,4 +1,4 @@
-import { clerkClient } from "@clerk/express";
+import { clerkClient, User } from "@clerk/express";
 import { Listings } from "../models/listing.js";
 import { AppError } from "../lib/error.js";
 import { Application, Job, Listing } from "@prisma/client";
@@ -9,7 +9,7 @@ import {
 	updateListingSchema,
 } from "../lib/validators.js";
 import app from "../app.js";
-import { reduceJob } from "./job.service.js";
+import { getJobWithWorker } from "./job.service.js";
 
 export async function getListing(id: string) {
 	const listing = await Listings.getListing(id);
@@ -20,6 +20,10 @@ export async function getListing(id: string) {
 }
 
 export async function createListing(userId: string) {
+	const user = await clerkClient.users.getUser(userId);
+	if (user.publicMetadata.role !== "LISTER") {
+		throw new AppError("You are not a job lister", 403);
+	}
 	const hasDraft = await Listings.hasDraft(userId);
 	if (hasDraft) {
 		throw new AppError(
@@ -143,9 +147,20 @@ export async function applyForListing(
 	listingId: string,
 	data: any
 ) {
-	const hasApplied = await Listings.hasApplied(userId, listingId);
+	const user = await clerkClient.users.getUser(userId);
+	if (user.publicMetadata.role !== "WORKER") {
+		throw new AppError("You are not a worker", 403);
+	}
+	const hasApplied = await Listings.hasApplied(user.id, listingId);
 	if (hasApplied) {
 		throw new AppError("You have already applied for this listing", 400);
+	}
+	const listing = await Listings.getListing(listingId);
+	if (!listing) {
+		throw new AppError("Listing not found", 404);
+	}
+	if (listing.job !== null) {
+		throw new AppError("This listing is already taken", 400);
 	}
 	const result = applyForListingSchema.safeParse(data);
 	if (!result.success) {
@@ -155,7 +170,7 @@ export async function applyForListing(
 			throw new AppError("Invalid data", 400);
 		}
 	}
-	await Listings.applyForListing(userId, listingId, result.data.message);
+	await Listings.applyForListing(user.id, listingId, result.data.message);
 	return true;
 }
 
@@ -194,9 +209,12 @@ export async function selectApplication(
 	if (application.listingId !== listingId) {
 		throw new AppError("Application not found", 404);
 	}
+	if (listing.job !== null) {
+		throw new AppError("This listing is already taken", 400);
+	}
 	const job = await Listings.selectApplication(application.userId, listingId);
 	const listingWithUser = await reduceListing(job.listing);
-	const jobWithUser = await reduceJob(job);
+	const jobWithUser = await getJobWithWorker(job);
 	return {
 		...jobWithUser,
 		listing: listingWithUser,
@@ -235,6 +253,7 @@ async function extendWithUser(listings: Listing[]) {
 async function reduceApplication(application: Application) {
 	const user = await clerkClient.users.getUser(application.userId);
 	return {
+		id: application.id,
 		user: {
 			id: user.id,
 			name: user.fullName,

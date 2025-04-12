@@ -7,6 +7,9 @@ const Listings = {
 				id,
 				status: "PUBLISHED",
 			},
+			include: {
+				job: true,
+			},
 		});
 	},
 	async createListing(userId: string) {

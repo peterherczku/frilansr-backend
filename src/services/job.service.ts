@@ -3,6 +3,8 @@ import { AppError } from "../lib/error.js";
 import { Job } from "@prisma/client";
 import { Jobs } from "../models/job.js";
 import { reduceListing } from "./listing.service.js";
+import { createDecipheriv } from "crypto";
+import { create } from "domain";
 
 export async function getJob(userId: string, jobId: string) {
 	const job = await Jobs.getJob(jobId);
@@ -10,17 +12,21 @@ export async function getJob(userId: string, jobId: string) {
 	if (job.listing.userId !== userId || job.workerId !== userId) {
 		throw new AppError("You are not authorized to view this job", 403);
 	}
-	const jobWithUser = await reduceJob(job);
+	const jobWithWorker = await getJobWithWorker(job);
 	const listingWithUser = await reduceListing(job.listing);
 	return {
-		...jobWithUser,
+		...jobWithWorker,
 		listing: listingWithUser,
 	};
 }
 
-export async function reduceJob(job: Job) {
+export async function getJobWithWorker(job: Job) {
 	const user = await clerkClient.users.getUser(job.workerId);
 	return {
+		id: job.id,
+		status: job.status,
+		createdAt: job.createdAt,
+		updatedAt: job.updatedAt,
 		worker: {
 			id: user.id,
 			name: user.fullName,
