@@ -24,15 +24,20 @@ export async function createListing(userId: string) {
 	if (user.publicMetadata.role !== "LISTER") {
 		throw new AppError("You are not a job lister", 403);
 	}
-	const hasDraft = await Listings.hasDraft(userId);
-	if (hasDraft) {
-		throw new AppError(
-			"You already have a draft listing. Please publish it first.",
-			400
-		);
+	const draft = await Listings.getDraft(userId);
+	if (draft) {
+		const draftListing = await reduceListing(draft);
+		return {
+			created: false,
+			draft: draftListing,
+		};
 	}
 	const listing = await Listings.createListing(userId);
-	return listing.id;
+	const draftListing = await reduceListing(listing);
+	return {
+		created: true,
+		draft: draftListing,
+	};
 }
 
 export async function updateListing(
