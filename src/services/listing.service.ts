@@ -26,14 +26,14 @@ export async function createListing(userId: string) {
 	}
 	const draft = await Listings.getDraft(userId);
 	if (draft) {
-		const draftListing = await reduceListing(draft);
+		const draftListing = await reduceListingDraft(draft);
 		return {
 			created: false,
 			draft: draftListing,
 		};
 	}
 	const listing = await Listings.createListing(userId);
-	const draftListing = await reduceListing(listing);
+	const draftListing = await reduceListingDraft(listing);
 	return {
 		created: true,
 		draft: draftListing,
@@ -56,6 +56,9 @@ export async function updateListing(
 	const listing = await Listings.updateListing(userId, listingId, result.data);
 	if (!listing) {
 		throw new AppError("Listing not found", 404);
+	}
+	if (listing.status === "DRAFT") {
+		return await reduceListingDraft(listing);
 	}
 	return await reduceListing(listing);
 }
@@ -247,6 +250,32 @@ export async function reduceListing(listing: Listing) {
 			name: user.fullName,
 			imageUrl: user.imageUrl,
 		},
+	};
+}
+
+export async function reduceListingDraft(listing: Listing) {
+	const user = await clerkClient.users.getUser(listing.userId);
+
+	return {
+		id: listing.id,
+		user: {
+			id: user.id,
+			name: user.fullName,
+			imageUrl: user.imageUrl,
+		},
+		...(listing.title != null && { title: listing.title }),
+		...(listing.description != null && { description: listing.description }),
+		...(listing.salary != null && { salary: listing.salary }),
+		...((listing.longitude != null || listing.latitude != null) && {
+			location: {
+				longitude: listing.longitude,
+				latitude: listing.latitude,
+			},
+		}),
+		...(listing.type != null && { type: listing.type }),
+		...(listing.image != null && { image: listing.image }),
+		...(listing.date != null && { date: listing.date }),
+		...(listing.duration != null && { duration: listing.duration }),
 	};
 }
 
