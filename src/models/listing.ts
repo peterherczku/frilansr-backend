@@ -117,7 +117,7 @@ const Listings = {
 				) AS distance
 				FROM "Listing"
 			) AS subquery
-			WHERE distance < ${radius} AND status = 'PUBLISHED AND job IS NULL'
+			WHERE distance < ${radius} AND status = 'PUBLISHED' AND job IS NULL
 			ORDER BY distance
 		`;
 	},
