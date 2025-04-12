@@ -245,6 +245,7 @@ export async function reduceListing(listing: Listing) {
 		image: listing.image,
 		date: listing.date,
 		duration: listing.duration,
+		status: listing.status,
 		user: {
 			id: user.id,
 			name: user.fullName,
@@ -258,6 +259,7 @@ export async function reduceListingDraft(listing: Listing) {
 
 	return {
 		id: listing.id,
+		status: listing.status,
 		user: {
 			id: user.id,
 			name: user.fullName,

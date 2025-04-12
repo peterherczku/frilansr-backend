@@ -28,7 +28,11 @@ export async function updateListing(
 			listingId,
 			req.body
 		);
-		res.status(201).json({ listing });
+		if (listing.status === "DRAFT") {
+			res.status(201).json({ draft: listing });
+		} else {
+			res.status(201).json({ listing });
+		}
 	} catch (error) {
 		next(error);
 	}

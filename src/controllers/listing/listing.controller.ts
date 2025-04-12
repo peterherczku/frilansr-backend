@@ -12,8 +12,8 @@ export async function createListing(
 	try {
 		const { userId } = getAuth(req);
 		const { created, draft } = await listingService.createListing(userId);
-		if (created) {
-			res.status(204).json({ created, draft });
+		if (!created) {
+			res.status(200).json({ created, draft });
 		} else {
 			res.status(201).json({ created, draft });
 		}
