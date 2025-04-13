@@ -54,7 +54,6 @@ export const updateListingSchema = z.object({
 			z.date({ message: "Date must be a valid date" })
 		)
 		.optional(),
-	image: z.string().optional(),
 });
 
 export const selectApplicationSchema = z.object({

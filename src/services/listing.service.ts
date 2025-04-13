@@ -240,10 +240,10 @@ export async function reduceListing(listing: Listing) {
 			longitude: listing.longitude,
 			latitude: listing.latitude,
 		},
-		createdAt: listing.createdAt,
+		createdAt: listing.createdAt.toISOString(),
 		type: listing.type,
 		image: listing.image,
-		date: listing.date,
+		date: listing.date.toISOString(),
 		duration: listing.duration,
 		status: listing.status,
 		user: {
@@ -265,6 +265,9 @@ export async function reduceListingDraft(listing: Listing) {
 			name: user.fullName,
 			imageUrl: user.imageUrl,
 		},
+		...(listing.createdAt != null && {
+			createdAt: listing.createdAt.toISOString(),
+		}),
 		...(listing.title != null && { title: listing.title }),
 		...(listing.description != null && { description: listing.description }),
 		...(listing.salary != null && { salary: listing.salary }),
@@ -276,7 +279,7 @@ export async function reduceListingDraft(listing: Listing) {
 		}),
 		...(listing.type != null && { type: listing.type }),
 		...(listing.image != null && { image: listing.image }),
-		...(listing.date != null && { date: listing.date }),
+		...(listing.date != null && { date: listing.date.toISOString() }),
 		...(listing.duration != null && { duration: listing.duration }),
 	};
 }
