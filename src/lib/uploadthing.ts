@@ -18,18 +18,30 @@ export const uploadRouter = {
 	})
 		.middleware(async ({ req }) => {
 			const { userId } = getAuth(req);
-			if (!userId) throw new AppError("User ID is required", 403);
-			const listingId = req.params["id"];
-			if (!listingId) throw new AppError("Listing ID is required", 400);
-			const listing = await Listings.getListing(listingId);
-			if (listing.userId !== userId)
+			if (!userId) {
+				console.log("no user id");
+				throw new AppError("User ID is required", 403);
+			}
+			const listingId = req.headers["x-listing-id"] as string;
+			if (!listingId) {
+				console.log("no listing id");
+				throw new AppError("Listing ID is required", 400);
+			}
+			const listing = await Listings.getListingOrDraft(listingId);
+			if (!listing) {
+				throw new AppError("Listing not found", 404);
+			}
+			if (listing.userId !== userId) {
+				console.log("last error");
 				throw new AppError(
 					"You are not authorized to upload an image for this listing",
 					403
 				);
+			}
 			return { userId, listingId };
 		})
 		.onUploadComplete(async (data) => {
+			console.log("a");
 			const listing = await Listings.updateListing(
 				data.metadata.userId,
 				data.metadata.listingId,

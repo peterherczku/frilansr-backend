@@ -4,13 +4,11 @@ import userRoutes from "./user/user.route.js";
 import jobRoutes from "./job/job.route.js";
 import { createRouteHandler } from "uploadthing/express";
 import { uploadRouter } from "../lib/uploadthing.js";
-import { requireAuth } from "../middlewares/authMiddleware.js";
 
 const router = Router();
 
 router.use(
 	"/uploadthing",
-	requireAuth,
 	createRouteHandler({
 		router: uploadRouter,
 	})
