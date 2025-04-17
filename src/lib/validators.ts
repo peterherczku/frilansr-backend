@@ -59,3 +59,20 @@ export const updateListingSchema = z.object({
 export const selectApplicationSchema = z.object({
 	applicationId: z.string(),
 });
+
+export const sendMessageSchema = z.object({
+	conversationId: z.string(),
+	content: z.string(),
+});
+
+export const getMessagesSchema = z.object({
+	conversationId: z.string(),
+	limit: z.number(),
+	before: z.preprocess(
+		(arg) =>
+			typeof arg === "string" || arg instanceof Date
+				? new Date(arg)
+				: undefined,
+		z.date({ message: "Date must be a valid date" })
+	),
+});

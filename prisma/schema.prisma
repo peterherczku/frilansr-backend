@@ -34,13 +34,14 @@ model Listing {
 }
 
 model Job {
-  id        String    @id @default(cuid())
-  listing   Listing   @relation(fields: [listingId], references: [id])
-  listingId String    @unique
-  workerId  String
-  status    JobStatus @default(WAITING_FOR_WORKER)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id           String         @id @default(cuid())
+  listing      Listing        @relation(fields: [listingId], references: [id])
+  listingId    String         @unique
+  workerId     String
+  status       JobStatus      @default(WAITING_FOR_WORKER)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  Conversation Conversation[]
 }
 
 model Application {
@@ -52,6 +53,26 @@ model Application {
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
   status    ApplicationStatus @default(PENDING)
+}
+
+model Conversation {
+  id        String    @id @default(uuid())
+  job       Job       @relation(fields: [jobId], references: [id])
+  jobId     String
+  workerId  String
+  listerId  String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  messages  Message[]
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  conversationId String
+  content        String
+  sentAt         DateTime     @default(now())
+  senderId       String
 }
 
 enum JobType {

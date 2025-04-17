@@ -3,8 +3,6 @@ import { AppError } from "../lib/error.js";
 import { Job } from "@prisma/client";
 import { Jobs } from "../models/job.js";
 import { reduceListing } from "./listing.service.js";
-import { createDecipheriv } from "crypto";
-import { create } from "domain";
 
 export async function getJob(userId: string, jobId: string) {
 	const job = await Jobs.getJob(jobId);
