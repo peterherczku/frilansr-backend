@@ -9,7 +9,7 @@ const stringToIntegerSchema = z.string().transform((val, ctx) => {
 		});
 		return z.NEVER;
 	}
-	return Math.round(num * 100);
+	return num;
 });
 
 export const userRoleEnum = z.enum(["LISTER", "WORKER"], {

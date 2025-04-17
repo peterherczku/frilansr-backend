@@ -106,7 +106,6 @@ export async function getMessages(userId: string, query: any) {
 export async function getRecentConversations(userId: string, query: any) {
 	const result = getRecentConversationsSchema.safeParse(query);
 	if (!result.success) {
-		console.log(result.error.issues);
 		throw new AppError("Invalid query", 400);
 	}
 	const { limit, page } = result.data;
@@ -114,7 +113,6 @@ export async function getRecentConversations(userId: string, query: any) {
 	if (!conversations) {
 		return [];
 	}
-
 	const conversationsWithLastMessage = await Promise.all(
 		conversations.map((c) => reduceConversation(userId, c))
 	);
