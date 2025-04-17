@@ -79,7 +79,7 @@ export const sendMessageSchema = z.object({
 
 export const getMessagesSchema = z.object({
 	conversationId: z.string(),
-	limit: z.number(),
+	limit: stringToIntegerSchema,
 	before: z.preprocess(
 		(arg) =>
 			typeof arg === "string" || arg instanceof Date
