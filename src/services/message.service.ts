@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { ably } from "../lib/ably.js";
 import { AppError } from "../lib/error.js";
 import {
+	getConversationSchema,
 	getMessagesSchema,
 	getRecentConversationsSchema,
 	sendMessageSchema,
@@ -12,6 +13,37 @@ import { clerkClient } from "@clerk/express";
 export type ConversationWithLastMessage = Prisma.ConversationGetPayload<{
 	include: { lastMessage: true };
 }>;
+
+export async function getConversation(userId: string, query: any) {
+	const res = getConversationSchema.safeParse(query);
+	if (!res.success) {
+		throw new AppError("Invalid query", 400);
+	}
+	const { id } = res.data;
+	const conversation = await Messages.getConversation(id);
+	if (!conversation) {
+		throw new AppError("Conversation not found", 404);
+	}
+	if (conversation.workerId !== userId && conversation.listerId !== userId) {
+		throw new AppError("You are not authorized to view this conversation", 403);
+	}
+	const partnerId =
+		userId === conversation.workerId
+			? conversation.listerId
+			: conversation.workerId;
+	const partner = await clerkClient.users.getUser(partnerId);
+	if (!partner) {
+		throw new AppError("Partner not found", 404);
+	}
+	return {
+		id: conversation.id,
+		partner: {
+			id: partner.id,
+			name: partner.fullName,
+			imageUrl: partner.imageUrl,
+		},
+	};
+}
 
 export async function sendMessage(userId: string, body: any) {
 	const res = sendMessageSchema.safeParse(body);

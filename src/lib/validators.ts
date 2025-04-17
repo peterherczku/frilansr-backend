@@ -93,3 +93,7 @@ export const getRecentConversationsSchema = z.object({
 	limit: stringToIntegerSchema,
 	page: stringToIntegerSchema,
 });
+
+export const getConversationSchema = z.object({
+	id: z.string(),
+});
