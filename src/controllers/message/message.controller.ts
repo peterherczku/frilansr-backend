@@ -14,7 +14,7 @@ export async function getRecentConversations(
 			userId,
 			req.query
 		);
-		res.status(200).json(conversations);
+		res.status(200).json({ conversations });
 	} catch (error) {
 		next(error);
 	}
