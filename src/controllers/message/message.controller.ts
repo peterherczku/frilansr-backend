@@ -3,6 +3,23 @@ import { NextFunction, Request, Response } from "express";
 import * as messageService from "../../services/message.service.js";
 import { getAuth } from "@clerk/express";
 
+export async function getRecentConversations(
+	req: Request,
+	res: Response,
+	next: NextFunction
+) {
+	try {
+		const { userId } = getAuth(req);
+		const conversations = await messageService.getRecentConversations(
+			userId,
+			req.query
+		);
+		res.status(200).json(conversations);
+	} catch (error) {
+		next(error);
+	}
+}
+
 export async function sendMessage(
 	req: Request,
 	res: Response,

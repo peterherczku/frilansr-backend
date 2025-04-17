@@ -22,13 +22,22 @@ const Messages = {
 		senderId: string,
 		content: string
 	) {
-		return await prisma.message.create({
+		const msg = await prisma.message.create({
 			data: {
 				conversationId,
 				senderId,
 				content,
 			},
 		});
+		await prisma.conversation.update({
+			where: {
+				id: conversationId,
+			},
+			data: {
+				lastMessageId: msg.id,
+			},
+		});
+		return msg;
 	},
 	async getMessages(conversationId: string, limit: number, before: Date) {
 		const messages = await prisma.message.findMany({
@@ -44,6 +53,28 @@ const Messages = {
 			take: limit,
 		});
 		return messages;
+	},
+	async getConversations(userId: string, limit: number, page: number) {
+		return await prisma.conversation.findMany({
+			where: {
+				OR: [
+					{
+						workerId: userId,
+					},
+					{
+						listerId: userId,
+					},
+				],
+			},
+			orderBy: {
+				updatedAt: "desc",
+			},
+			include: {
+				lastMessage: true,
+			},
+			skip: (page - 1) * limit,
+			take: limit,
+		});
 	},
 };
 

@@ -76,3 +76,8 @@ export const getMessagesSchema = z.object({
 		z.date({ message: "Date must be a valid date" })
 	),
 });
+
+export const getRecentConversationsSchema = z.object({
+	limit: z.number(),
+	page: z.number(),
+});
