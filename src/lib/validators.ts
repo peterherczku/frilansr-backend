@@ -1,5 +1,17 @@
 import { z } from "zod";
 
+const stringToIntegerSchema = z.string().transform((val, ctx) => {
+	const num = parseFloat(val);
+	if (isNaN(num)) {
+		ctx.addIssue({
+			code: z.ZodIssueCode.custom,
+			message: "Invalid number",
+		});
+		return z.NEVER;
+	}
+	return Math.round(num * 100);
+});
+
 export const userRoleEnum = z.enum(["LISTER", "WORKER"], {
 	message: "Invalid role",
 });
@@ -78,6 +90,6 @@ export const getMessagesSchema = z.object({
 });
 
 export const getRecentConversationsSchema = z.object({
-	limit: z.number(),
-	page: z.number(),
+	limit: stringToIntegerSchema,
+	page: stringToIntegerSchema,
 });
