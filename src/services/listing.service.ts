@@ -256,7 +256,7 @@ export async function pendingListings(userId: string) {
 }
 
 export function makeLocationPublic(longitude: number, latitude: number) {
-	const [newLat, newLong] = jitterLocation(latitude, longitude, 250);
+	const [newLat, newLong] = jitterLocation(latitude, longitude, 200);
 	return {
 		longitude: newLong,
 		latitude: newLat,
