@@ -10,8 +10,22 @@ export async function activeJobs(
 ) {
 	try {
 		const { userId } = getAuth(req);
-		const listings = await jobService.getActiveJobs(userId);
-		res.status(200).json(listings);
+		const jobs = await jobService.getActiveJobs(userId);
+		res.status(200).json(jobs);
+	} catch (error) {
+		next(error);
+	}
+}
+
+export async function activeWorkerJobs(
+	req: Request,
+	res: Response,
+	next: NextFunction
+) {
+	try {
+		const { userId } = getAuth(req);
+		const jobs = await jobService.getActiveWorkerJobs(userId);
+		res.status(200).json(jobs);
 	} catch (error) {
 		next(error);
 	}

@@ -35,6 +35,17 @@ export async function getActiveJobs(userId: string) {
 	return await extendJobs(jobs, false);
 }
 
+export async function getActiveWorkerJobs(userId: string) {
+	const user = await clerkClient.users.getUser(userId);
+	if (user.publicMetadata.role !== "WORKER") {
+		throw new AppError("You are not a worker", 403);
+	}
+	const jobs = await Jobs.activeWorkerJobs(userId);
+	if (!jobs) return [];
+
+	return await extendJobs(jobs, false);
+}
+
 export async function extendJobs(
 	jobs: JobWithListing[],
 	jitterLocation = true

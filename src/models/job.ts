@@ -11,12 +11,22 @@ const Jobs = {
 			},
 		});
 	},
-	async activeJobs(userId) {
+	async activeJobs(userId: string) {
 		return await prisma.job.findMany({
 			where: {
 				listing: {
 					userId: userId,
 				},
+			},
+			include: {
+				listing: true,
+			},
+		});
+	},
+	async activeWorkerJobs(userId: string) {
+		return await prisma.job.findMany({
+			where: {
+				workerId: userId,
 			},
 			include: {
 				listing: true,
