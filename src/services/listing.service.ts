@@ -243,6 +243,12 @@ export async function selectApplication(
 		job.id
 	);
 
+	await Messages.createMessage(
+		converation.id,
+		job.listing.userId,
+		"Hey there! I accepted your application, please let me know if you have any further questions!"
+	);
+
 	return {
 		...jobWithUser,
 		listing: listingWithUser,
