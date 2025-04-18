@@ -9,11 +9,13 @@ import {
 	updateListingSchema,
 } from "../lib/validators.js";
 import { getJobWithWorker } from "./job.service.js";
+import { jitterLocation } from "../lib/locationUtil.js";
 
 export type ListingWithApplication = Prisma.ListingGetPayload<{
 	include: { applications: true };
 }>;
 
+// public location
 export async function getListing(id: string) {
 	const listing = await Listings.getListing(id);
 	if (!listing) {
@@ -22,6 +24,7 @@ export async function getListing(id: string) {
 	return await reduceListing(listing);
 }
 
+// private location
 export async function createListing(userId: string) {
 	const user = await clerkClient.users.getUser(userId);
 	if (user.publicMetadata.role !== "LISTER") {
@@ -36,13 +39,14 @@ export async function createListing(userId: string) {
 		};
 	}
 	const listing = await Listings.createListing(userId);
-	const draftListing = await reduceListingDraft(listing);
+	const draftListing = await reduceListingDraft(listing, false);
 	return {
 		created: true,
 		draft: draftListing,
 	};
 }
 
+// private location
 export async function updateListing(
 	userId: string,
 	listingId: string,
@@ -61,11 +65,12 @@ export async function updateListing(
 		throw new AppError("Listing not found", 404);
 	}
 	if (listing.status === "DRAFT") {
-		return await reduceListingDraft(listing);
+		return await reduceListingDraft(listing, false);
 	}
-	return await reduceListing(listing);
+	return await reduceListing(listing, false);
 }
 
+// private location
 export async function publishListing(userId: string, listingId: string) {
 	const draft = await Listings.getDraft(userId);
 	if (!draft) {
@@ -88,9 +93,10 @@ export async function publishListing(userId: string, listingId: string) {
 		throw new AppError("Please fill all the fields", 400);
 	}
 	const listing = await Listings.publishListing(userId, listingId);
-	return reduceListing(listing);
+	return reduceListing(listing, false);
 }
 
+// public location
 export async function searchListing(
 	query: string,
 	category: string | string[] | undefined,
@@ -122,6 +128,7 @@ export async function searchListing(
 	return listingsWithUser;
 }
 
+// public location
 export async function nearbyListings(
 	longitude: string,
 	latitude: string,
@@ -144,6 +151,7 @@ export async function nearbyListings(
 	return listingsWithUser;
 }
 
+// public location
 export async function featuredListings() {
 	const listings = await Listings.featuredListings();
 	if (!listings) {
@@ -198,6 +206,7 @@ export async function getApplications(userId: string, listingId: string) {
 	return applicationsWithUser;
 }
 
+// private location
 export async function selectApplication(
 	userId: string,
 	listingId: string,
@@ -224,7 +233,7 @@ export async function selectApplication(
 		throw new AppError("This listing is already taken", 400);
 	}
 	const job = await Listings.selectApplication(application.userId, listingId);
-	const listingWithUser = await reduceListing(job.listing);
+	const listingWithUser = await reduceListing(job.listing, false);
 	const jobWithUser = await getJobWithWorker(job);
 	return {
 		...jobWithUser,
@@ -232,6 +241,7 @@ export async function selectApplication(
 	};
 }
 
+// private location
 export async function pendingListings(userId: string) {
 	const user = await clerkClient.users.getUser(userId);
 	if (user.publicMetadata.role !== "LISTER") {
@@ -241,21 +251,31 @@ export async function pendingListings(userId: string) {
 	if (!listings) {
 		throw new AppError("Listings not found", 404);
 	}
-	const listingsWithUser = await extendWithApplicationsAndUser(listings);
+	const listingsWithUser = await extendWithApplicationsAndUser(listings, false);
 	return listingsWithUser;
 }
 
-export async function reduceListing(listing: Listing) {
+export function makeLocationPublic(longitude: number, latitude: number) {
+	const [newLat, newLong] = jitterLocation(latitude, longitude, 250);
+	return {
+		longitude: newLong,
+		latitude: newLat,
+	};
+}
+
+export async function reduceListing(listing: Listing, jitterLocation = true) {
 	const user = await clerkClient.users.getUser(listing.userId);
 	return {
 		id: listing.id,
 		title: listing.title,
 		description: listing.description,
 		salary: listing.salary,
-		location: {
-			longitude: listing.longitude,
-			latitude: listing.latitude,
-		},
+		location: jitterLocation
+			? makeLocationPublic(listing.longitude, listing.latitude)
+			: {
+					longitude: listing.longitude,
+					latitude: listing.latitude,
+			  },
 		createdAt: listing.createdAt.toISOString(),
 		type: listing.type,
 		image: listing.image,
@@ -270,7 +290,10 @@ export async function reduceListing(listing: Listing) {
 	};
 }
 
-export async function reduceListingDraft(listing: Listing) {
+export async function reduceListingDraft(
+	listing: Listing,
+	jitterLocation = true
+) {
 	const user = await clerkClient.users.getUser(listing.userId);
 
 	return {
@@ -288,10 +311,12 @@ export async function reduceListingDraft(listing: Listing) {
 		...(listing.description != null && { description: listing.description }),
 		...(listing.salary != null && { salary: listing.salary }),
 		...((listing.longitude != null || listing.latitude != null) && {
-			location: {
-				longitude: listing.longitude,
-				latitude: listing.latitude,
-			},
+			location: jitterLocation
+				? makeLocationPublic(listing.longitude, listing.latitude)
+				: {
+						longitude: listing.longitude,
+						latitude: listing.latitude,
+				  },
 		}),
 		...(listing.type != null && { type: listing.type }),
 		...(listing.image != null && { image: listing.image }),
@@ -300,13 +325,16 @@ export async function reduceListingDraft(listing: Listing) {
 	};
 }
 
-async function extendWithUser(listings: Listing[]) {
-	const listingsWithUser = await Promise.all(listings.map(reduceListing));
+async function extendWithUser(listings: Listing[], jitterLocation = true) {
+	const listingsWithUser = await Promise.all(
+		listings.map((listing) => reduceListing(listing, jitterLocation))
+	);
 	return listingsWithUser;
 }
 
 async function extendWithApplicationsAndUser(
-	listings: ListingWithApplication[]
+	listings: ListingWithApplication[],
+	jitterLocation = false
 ) {
 	const listingsWithApplications = await Promise.all(
 		listings.map(async (listing) => {
@@ -314,7 +342,7 @@ async function extendWithApplicationsAndUser(
 				listing.applications
 			);
 			return {
-				...(await reduceListing(listing)),
+				...(await reduceListing(listing, jitterLocation)),
 				applications: applicationsWithUser,
 			};
 		})

@@ -4,6 +4,7 @@ import { Job } from "@prisma/client";
 import { Jobs } from "../models/job.js";
 import { reduceListing } from "./listing.service.js";
 
+// private location
 export async function getJob(userId: string, jobId: string) {
 	const job = await Jobs.getJob(jobId);
 	if (!job) throw new AppError("Job not found", 404);
@@ -11,7 +12,7 @@ export async function getJob(userId: string, jobId: string) {
 		throw new AppError("You are not authorized to view this job", 403);
 	}
 	const jobWithWorker = await getJobWithWorker(job);
-	const listingWithUser = await reduceListing(job.listing);
+	const listingWithUser = await reduceListing(job.listing, false);
 	return {
 		...jobWithWorker,
 		listing: listingWithUser,
