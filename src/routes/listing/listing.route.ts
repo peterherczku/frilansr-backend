@@ -4,6 +4,7 @@ import {
 	createListing,
 	featuredListings,
 	nearbyListings,
+	pendingListings,
 	searchListing,
 } from "../../controllers/listing/listing.controller.js";
 import { requireListingId } from "../../middlewares/listingIdMiddleware.js";
@@ -14,6 +15,7 @@ const router = Router();
 router.get("/search", searchListing);
 router.get("/nearby", nearbyListings);
 router.get("/featured", featuredListings);
+router.get("/pending", requireAuth, pendingListings);
 router.post("/create", requireAuth, createListing);
 router.use("/:id", requireListingId, listingIdRoutes);
 

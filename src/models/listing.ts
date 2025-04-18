@@ -193,6 +193,20 @@ const Listings = {
 			},
 		});
 	},
+	async pendingRequests(userId: string) {
+		return await prisma.listing.findMany({
+			where: {
+				userId,
+				status: "PUBLISHED",
+				job: {
+					is: null,
+				},
+			},
+			include: {
+				applications: true,
+			},
+		});
+	},
 };
 
 export { Listings };

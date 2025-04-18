@@ -1,15 +1,18 @@
-import { clerkClient, User } from "@clerk/express";
+import { clerkClient } from "@clerk/express";
 import { Listings } from "../models/listing.js";
 import { AppError } from "../lib/error.js";
-import { Application, Job, Listing } from "@prisma/client";
+import { Application, Listing, Prisma } from "@prisma/client";
 import {
 	applyForListingSchema,
 	jobTypeEnum,
 	selectApplicationSchema,
 	updateListingSchema,
 } from "../lib/validators.js";
-import app from "../app.js";
 import { getJobWithWorker } from "./job.service.js";
+
+export type ListingWithApplication = Prisma.ListingGetPayload<{
+	include: { applications: true };
+}>;
 
 export async function getListing(id: string) {
 	const listing = await Listings.getListing(id);
@@ -229,6 +232,19 @@ export async function selectApplication(
 	};
 }
 
+export async function pendingListings(userId: string) {
+	const user = await clerkClient.users.getUser(userId);
+	if (user.publicMetadata.role !== "LISTER") {
+		throw new AppError("You are not a job lister", 403);
+	}
+	const listings = await Listings.pendingRequests(userId);
+	if (!listings) {
+		throw new AppError("Listings not found", 404);
+	}
+	const listingsWithUser = await extendWithApplicationsAndUser(listings);
+	return listingsWithUser;
+}
+
 export async function reduceListing(listing: Listing) {
 	const user = await clerkClient.users.getUser(listing.userId);
 	return {
@@ -287,6 +303,23 @@ export async function reduceListingDraft(listing: Listing) {
 async function extendWithUser(listings: Listing[]) {
 	const listingsWithUser = await Promise.all(listings.map(reduceListing));
 	return listingsWithUser;
+}
+
+async function extendWithApplicationsAndUser(
+	listings: ListingWithApplication[]
+) {
+	const listingsWithApplications = await Promise.all(
+		listings.map(async (listing) => {
+			const applicationsWithUser = await extendApplicationsWithUser(
+				listing.applications
+			);
+			return {
+				...(await reduceListing(listing)),
+				applications: applicationsWithUser,
+			};
+		})
+	);
+	return listingsWithApplications;
 }
 
 async function reduceApplication(application: Application) {

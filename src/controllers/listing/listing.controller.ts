@@ -74,3 +74,17 @@ export async function featuredListings(
 		next(error);
 	}
 }
+
+export async function pendingListings(
+	req: Request,
+	res: Response,
+	next: NextFunction
+) {
+	try {
+		const { userId } = getAuth(req);
+		const listings = await listingService.pendingListings(userId);
+		res.status(200).json(listings);
+	} catch (error) {
+		next(error);
+	}
+}
