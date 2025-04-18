@@ -10,6 +10,7 @@ import {
 } from "../lib/validators.js";
 import { getJobWithWorker } from "./job.service.js";
 import { jitterLocation } from "../lib/locationUtil.js";
+import { Messages } from "../models/messages.js";
 
 export type ListingWithApplication = Prisma.ListingGetPayload<{
 	include: { applications: true };
@@ -235,6 +236,13 @@ export async function selectApplication(
 	const job = await Listings.selectApplication(application.userId, listingId);
 	const listingWithUser = await reduceListing(job.listing, false);
 	const jobWithUser = await getJobWithWorker(job);
+
+	const converation = await Messages.createConversation(
+		job.workerId,
+		job.listing.userId,
+		job.id
+	);
+
 	return {
 		...jobWithUser,
 		listing: listingWithUser,
