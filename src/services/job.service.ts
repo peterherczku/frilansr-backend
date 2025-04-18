@@ -1,8 +1,12 @@
 import { clerkClient } from "@clerk/express";
 import { AppError } from "../lib/error.js";
-import { Job } from "@prisma/client";
+import { Job, Prisma } from "@prisma/client";
 import { Jobs } from "../models/job.js";
-import { reduceListing } from "./listing.service.js";
+import { extendWithUser, reduceListing } from "./listing.service.js";
+
+export type JobWithListing = Prisma.JobGetPayload<{
+	include: { listing: true };
+}>;
 
 // private location
 export async function getJob(userId: string, jobId: string) {
@@ -17,6 +21,34 @@ export async function getJob(userId: string, jobId: string) {
 		...jobWithWorker,
 		listing: listingWithUser,
 	};
+}
+
+// private location
+export async function getActiveJobs(userId: string) {
+	const user = await clerkClient.users.getUser(userId);
+	if (user.publicMetadata.role !== "LISTER") {
+		throw new AppError("You are not a job lister", 403);
+	}
+	const jobs = await Jobs.activeJobs(userId);
+	if (!jobs) return [];
+
+	return await extendJobs(jobs, false);
+}
+
+export async function extendJobs(
+	jobs: JobWithListing[],
+	jitterLocation = true
+) {
+	return Promise.all(
+		jobs.map(async (job) => {
+			const jobWithWorker = await getJobWithWorker(job);
+			const listingWithUser = await reduceListing(job.listing, jitterLocation);
+			return {
+				...jobWithWorker,
+				listing: listingWithUser,
+			};
+		})
+	);
 }
 
 export async function getJobWithWorker(job: Job) {

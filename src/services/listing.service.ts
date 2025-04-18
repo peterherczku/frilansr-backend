@@ -339,7 +339,10 @@ export async function reduceListingDraft(
 	};
 }
 
-async function extendWithUser(listings: Listing[], jitterLocation = true) {
+export async function extendWithUser(
+	listings: Listing[],
+	jitterLocation = true
+) {
 	const listingsWithUser = await Promise.all(
 		listings.map((listing) => reduceListing(listing, jitterLocation))
 	);
