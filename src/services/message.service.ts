@@ -66,15 +66,21 @@ export async function sendMessage(userId: string, body: any) {
 		throw new AppError("Failed to send message", 502);
 	}
 	try {
-		for (let i = 0; i < 2; i++) {
-			const userId = i === 0 ? conversation.workerId : conversation.listerId;
-			const channel = ably.channels.get(`user:${userId}`);
+		const recipients = [conversation.workerId, conversation.listerId];
+		const uniqueRecipients = [...new Set(recipients)];
+
+		uniqueRecipients.forEach((targetUserId) => {
+			const channel = ably.channels.get(`user:${targetUserId}`);
 			channel.publish("message", {
-				id: message.id,
-				senderId: userId,
-				content,
+				conversationId,
+				message: {
+					id: message.id,
+					senderId: userId,
+					content,
+					sentAt: message.sentAt,
+				},
 			});
-		}
+		});
 	} catch (err) {
 		console.log("Ably push error: ", err);
 		throw new AppError("Failed to send message to Ably", 502);
