@@ -167,15 +167,11 @@ export async function sendSeen(userId: string, body: any) {
 		throw new AppError("Failed to update seen", 502);
 	}
 
-	const partnerParticipant = getPartnerParticipant(
-		userId,
-		conversation.participants
-	);
 	const partnerId = getPartnerId(userId, conversation.participants);
 	const channel = ably.channels.get(`user:${partnerId}`);
 	channel.publish("seen", {
 		conversationId,
-		seenAt,
+		seenAt: seenAt.toISOString(),
 		userId,
 	});
 }
