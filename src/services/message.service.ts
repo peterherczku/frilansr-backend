@@ -184,6 +184,10 @@ async function reduceConversation(
 	userId: string,
 	conversation: ConversationWithLastMessageAndParticipants
 ) {
+	const partnerParticipant = getPartnerParticipant(
+		userId,
+		conversation.participants
+	);
 	const partner = await getPartner(userId, conversation.participants);
 
 	return {
@@ -193,6 +197,9 @@ async function reduceConversation(
 			id: partner.id,
 			name: partner.fullName,
 			imageUrl: partner.imageUrl,
+			...(partnerParticipant.lastSeenAt
+				? { lastSeen: partnerParticipant.lastSeenAt }
+				: {}),
 		},
 		lastMessage: conversation.lastMessage
 			? {

@@ -99,11 +99,13 @@ const Messages = {
 			id: string;
 			name: string;
 			imageUrl: string;
+			lastSeenAt?: Date;
 		},
 		lister: {
 			id: string;
 			name: string;
 			imageUrl: string;
+			lastSeenAt?: Date;
 		},
 		conversation: Conversation,
 		message: Message
