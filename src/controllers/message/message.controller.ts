@@ -51,6 +51,20 @@ export async function sendMessage(
 	}
 }
 
+export async function sendSeen(
+	req: Request,
+	res: Response,
+	next: NextFunction
+) {
+	try {
+		const { userId } = getAuth(req);
+		await messageService.sendSeen(userId, req.body);
+		res.status(200).json({ success: true });
+	} catch (error) {
+		next(error);
+	}
+}
+
 export async function getMessages(
 	req: Request,
 	res: Response,

@@ -126,6 +126,21 @@ const Messages = {
 			});
 		}
 	},
+	async updateSeen(userId: string, conversationId: string) {
+		const seenAt = new Date();
+		await prisma.conversationParticipant.update({
+			where: {
+				userId_conversationId: {
+					userId: userId,
+					conversationId: conversationId,
+				},
+			},
+			data: {
+				lastSeenAt: seenAt,
+			},
+		});
+		return seenAt;
+	},
 };
 
 export { Messages };

@@ -77,6 +77,8 @@ model ConversationParticipant {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   lastSeenAt     DateTime?    @default(now())
+
+  @@unique([userId, conversationId])
 }
 
 model Message {

@@ -6,6 +6,7 @@ import {
 	getMessagesSchema,
 	getRecentConversationsSchema,
 	sendMessageSchema,
+	sendSeenSchema,
 } from "../lib/validators.js";
 import { Messages } from "../models/messages.js";
 import { clerkClient } from "@clerk/express";
@@ -136,6 +137,38 @@ export async function getRecentConversations(userId: string, query: any) {
 	return conversationsWithLastMessage;
 }
 
+export async function sendSeen(userId: string, body: any) {
+	const res = sendSeenSchema.safeParse(body);
+	if (!res.success) {
+		throw new AppError("Invalid seen data", 400);
+	}
+	const { conversationId } = res.data;
+	const conversation = await Messages.getConversation(conversationId);
+	if (!conversation) {
+		throw new AppError("Conversation not found", 404);
+	}
+	if (
+		conversation.participants.find((p) => p.userId === userId) === undefined
+	) {
+		throw new AppError(
+			"You are not authorized to send messages in this conversation",
+			403
+		);
+	}
+	const seenAt = await Messages.updateSeen(conversationId, userId);
+	if (!seenAt) {
+		throw new AppError("Failed to update seen", 502);
+	}
+
+	const partnerId = getPartnerId(userId, conversation.participants);
+	const channel = ably.channels.get(`user:${partnerId}`);
+	channel.publish("seen", {
+		conversationId,
+		seenAt,
+		userId,
+	});
+}
+
 async function reduceConversation(
 	userId: string,
 	conversation: ConversationWithLastMessageAndParticipants
@@ -161,7 +194,7 @@ async function reduceConversation(
 	};
 }
 
-async function getPartner(
+async function getPartnerId(
 	userId: string,
 	participants: ConversationParticipant[]
 ) {
@@ -170,6 +203,14 @@ async function getPartner(
 	if (!partnerId) {
 		throw new AppError("Partner not found", 404);
 	}
+	return partnerId;
+}
+
+async function getPartner(
+	userId: string,
+	participants: ConversationParticipant[]
+) {
+	const partnerId = await getPartnerId(userId, participants);
 	const partner = await clerkClient.users.getUser(partnerId);
 	if (!partner) {
 		throw new AppError("Partner not found", 404);
