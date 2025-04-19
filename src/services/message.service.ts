@@ -38,6 +38,10 @@ export async function getConversation(userId: string, query: any) {
 			403
 		);
 	}
+	const partnerParticipant = getPartnerParticipant(
+		userId,
+		conversation.participants
+	);
 	const partner = await getPartner(userId, conversation.participants);
 
 	return {
@@ -46,6 +50,9 @@ export async function getConversation(userId: string, query: any) {
 			id: partner.id,
 			name: partner.fullName,
 			imageUrl: partner.imageUrl,
+			...(partnerParticipant.lastSeenAt
+				? { lastSeen: partnerParticipant.lastSeenAt }
+				: {}),
 		},
 	};
 }
@@ -160,6 +167,10 @@ export async function sendSeen(userId: string, body: any) {
 		throw new AppError("Failed to update seen", 502);
 	}
 
+	const partnerParticipant = getPartnerParticipant(
+		userId,
+		conversation.participants
+	);
 	const partnerId = getPartnerId(userId, conversation.participants);
 	const channel = ably.channels.get(`user:${partnerId}`);
 	channel.publish("seen", {
@@ -192,6 +203,17 @@ async function reduceConversation(
 			  }
 			: null,
 	};
+}
+
+function getPartnerParticipant(
+	userId: string,
+	participants: ConversationParticipant[]
+) {
+	const partnerParticipant = participants.find((p) => p.userId !== userId);
+	if (!partnerParticipant) {
+		throw new AppError("Partner not found", 404);
+	}
+	return partnerParticipant;
 }
 
 async function getPartnerId(
