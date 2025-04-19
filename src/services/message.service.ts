@@ -163,7 +163,7 @@ export async function sendSeen(userId: string, body: any) {
 			403
 		);
 	}
-	const seenAt = await Messages.updateSeen(conversationId, userId);
+	const seenAt = await Messages.updateSeen(userId, conversationId);
 	if (!seenAt) {
 		throw new AppError("Failed to update seen", 502);
 	}
