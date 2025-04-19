@@ -6,9 +6,13 @@ const Messages = {
 	async createConversation(workerId: string, listerId: string, jobId: string) {
 		return await prisma.conversation.create({
 			data: {
-				workerId,
-				listerId,
-				jobId,
+				jobId, // link to your existing Job
+				participants: {
+					create: [{ userId: workerId }, { userId: listerId }],
+				},
+			},
+			include: {
+				participants: true,
 			},
 		});
 	},
@@ -16,6 +20,9 @@ const Messages = {
 		return await prisma.conversation.findFirst({
 			where: {
 				id: conversationId,
+			},
+			include: {
+				participants: true,
 			},
 		});
 	},
@@ -59,20 +66,16 @@ const Messages = {
 	async getConversations(userId: string, limit: number, page: number) {
 		return await prisma.conversation.findMany({
 			where: {
-				OR: [
-					{
-						workerId: userId,
-					},
-					{
-						listerId: userId,
-					},
-				],
+				participants: {
+					some: { userId },
+				},
 			},
 			orderBy: {
 				updatedAt: "desc",
 			},
 			include: {
 				lastMessage: true,
+				participants: true,
 			},
 			skip: (page - 1) * limit,
 			take: limit,
@@ -81,14 +84,9 @@ const Messages = {
 	async getAllConversationIds(userId: string) {
 		const conversations = await prisma.conversation.findMany({
 			where: {
-				OR: [
-					{
-						workerId: userId,
-					},
-					{
-						listerId: userId,
-					},
-				],
+				participants: {
+					some: { userId },
+				},
 			},
 			select: {
 				id: true,

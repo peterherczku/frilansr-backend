@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { ConversationParticipant, Prisma } from "@prisma/client";
 import { ably } from "../lib/ably.js";
 import { AppError } from "../lib/error.js";
 import {
@@ -14,6 +14,11 @@ export type ConversationWithLastMessage = Prisma.ConversationGetPayload<{
 	include: { lastMessage: true };
 }>;
 
+export type ConversationWithLastMessageAndParticipants =
+	Prisma.ConversationGetPayload<{
+		include: { lastMessage: true; participants: true };
+	}>;
+
 export async function getConversation(userId: string, query: any) {
 	const res = getConversationSchema.safeParse(query);
 	if (!res.success) {
@@ -24,17 +29,16 @@ export async function getConversation(userId: string, query: any) {
 	if (!conversation) {
 		throw new AppError("Conversation not found", 404);
 	}
-	if (conversation.workerId !== userId && conversation.listerId !== userId) {
-		throw new AppError("You are not authorized to view this conversation", 403);
+	if (
+		conversation.participants.find((p) => p.userId === userId) === undefined
+	) {
+		throw new AppError(
+			"You are not authorized to send messages in this conversation",
+			403
+		);
 	}
-	const partnerId =
-		userId === conversation.workerId
-			? conversation.listerId
-			: conversation.workerId;
-	const partner = await clerkClient.users.getUser(partnerId);
-	if (!partner) {
-		throw new AppError("Partner not found", 404);
-	}
+	const partner = await getPartner(userId, conversation.participants);
+
 	return {
 		id: conversation.id,
 		partner: {
@@ -55,7 +59,9 @@ export async function sendMessage(userId: string, body: any) {
 	if (!conversation) {
 		throw new AppError("Conversation not found", 404);
 	}
-	if (conversation.workerId !== userId && conversation.listerId !== userId) {
+	if (
+		conversation.participants.find((p) => p.userId === userId) === undefined
+	) {
 		throw new AppError(
 			"You are not authorized to send messages in this conversation",
 			403
@@ -66,7 +72,7 @@ export async function sendMessage(userId: string, body: any) {
 		throw new AppError("Failed to send message", 502);
 	}
 	try {
-		const recipients = [conversation.workerId, conversation.listerId];
+		const recipients = conversation.participants.map((p) => p.userId);
 		const uniqueRecipients = [...new Set(recipients)];
 
 		uniqueRecipients.forEach((targetUserId) => {
@@ -97,9 +103,11 @@ export async function getMessages(userId: string, query: any) {
 	if (!conversation) {
 		throw new AppError("Conversation not found", 404);
 	}
-	if (conversation.workerId !== userId && conversation.listerId !== userId) {
+	if (
+		conversation.participants.find((p) => p.userId === userId) === undefined
+	) {
 		throw new AppError(
-			"You are not authorized to view messages in this conversation",
+			"You are not authorized to send messages in this conversation",
 			403
 		);
 	}
@@ -130,16 +138,9 @@ export async function getRecentConversations(userId: string, query: any) {
 
 async function reduceConversation(
 	userId: string,
-	conversation: ConversationWithLastMessage
+	conversation: ConversationWithLastMessageAndParticipants
 ) {
-	const partnerId =
-		userId === conversation.workerId
-			? conversation.listerId
-			: conversation.workerId;
-	const partner = await clerkClient.users.getUser(partnerId);
-	if (!partner) {
-		throw new AppError("Partner not found", 404);
-	}
+	const partner = await getPartner(userId, conversation.participants);
 
 	return {
 		id: conversation.id,
@@ -158,4 +159,20 @@ async function reduceConversation(
 			  }
 			: null,
 	};
+}
+
+async function getPartner(
+	userId: string,
+	participants: ConversationParticipant[]
+) {
+	const partnerParticipant = participants.find((p) => p.userId !== userId);
+	const partnerId = partnerParticipant.userId ?? null;
+	if (!partnerId) {
+		throw new AppError("Partner not found", 404);
+	}
+	const partner = await clerkClient.users.getUser(partnerId);
+	if (!partner) {
+		throw new AppError("Partner not found", 404);
+	}
+	return partner;
 }

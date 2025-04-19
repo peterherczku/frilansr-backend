@@ -237,14 +237,14 @@ export async function selectApplication(
 	const listingWithUser = await reduceListing(job.listing, false);
 	const jobWithUser = await getJobWithWorker(job);
 
-	const converation = await Messages.createConversation(
+	const conversation = await Messages.createConversation(
 		job.workerId,
 		job.listing.userId,
 		job.id
 	);
 
 	const message = await Messages.createMessage(
-		converation.id,
+		conversation.id,
 		job.listing.userId,
 		"Hey there! I accepted your application, please let me know if you have any further questions!"
 	);
@@ -252,7 +252,7 @@ export async function selectApplication(
 	await Messages.notifyUsersAboutConversation(
 		jobWithUser.worker,
 		listingWithUser.user,
-		converation,
+		conversation,
 		message
 	);
 
