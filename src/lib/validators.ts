@@ -77,6 +77,10 @@ export const sendMessageSchema = z.object({
 	content: z.string(),
 });
 
+export const sendSeenSchema = z.object({
+	conversationId: z.string(),
+});
+
 export const getMessagesSchema = z.object({
 	conversationId: z.string(),
 	limit: stringToIntegerSchema,
