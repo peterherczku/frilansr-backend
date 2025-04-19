@@ -66,7 +66,7 @@ export async function sendMessage(userId: string, body: any) {
 		throw new AppError("Failed to send message", 502);
 	}
 	try {
-		const channelClient = ably.channels.get(conversationId);
+		const channelClient = ably.channels.get(`conversation:${conversationId}`);
 		await channelClient.publish("message", {
 			id: message.id,
 			senderId: userId,

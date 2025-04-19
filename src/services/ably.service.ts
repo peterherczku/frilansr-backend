@@ -7,7 +7,7 @@ export async function getAblyTokenForUser(userId: string) {
 	capability[`user:${userId}`] = ["subscribe"];
 	const conversationIds = await Messages.getAllConversationIds(userId);
 	for (const conversationId of conversationIds) {
-		capability[conversationId] = ["publish", "subscribe"];
+		capability[`conversation:${conversationId}`] = ["publish", "subscribe"];
 	}
 	const tokenParams = {
 		clientId: userId,
