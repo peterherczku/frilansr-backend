@@ -249,6 +249,11 @@ export async function selectApplication(
 		"Hey there! I accepted your application, please let me know if you have any further questions!"
 	);
 
+	await Messages.notifiyUsersAboutConversation(
+		[converation.workerId, converation.listerId],
+		converation.id
+	);
+
 	return {
 		...jobWithUser,
 		listing: listingWithUser,

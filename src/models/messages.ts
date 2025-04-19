@@ -1,3 +1,4 @@
+import { ably } from "../lib/ably.js";
 import { prisma } from "../lib/prisma.js";
 
 const Messages = {
@@ -93,6 +94,17 @@ const Messages = {
 			},
 		});
 		return conversations.map((conversation) => conversation.id);
+	},
+	async notifiyUsersAboutConversation(
+		userIds: string[],
+		conversationId: string
+	) {
+		for (const userId of userIds) {
+			const channel = ably.channels.get(`user:${userId}`);
+			channel.publish("new-conversation", {
+				conversationId,
+			});
+		}
 	},
 };
 
