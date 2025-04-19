@@ -1,3 +1,4 @@
+import { Conversation, Message } from "@prisma/client";
 import { ably } from "../lib/ably.js";
 import { prisma } from "../lib/prisma.js";
 
@@ -95,14 +96,35 @@ const Messages = {
 		});
 		return conversations.map((conversation) => conversation.id);
 	},
-	async notifiyUsersAboutConversation(
-		userIds: string[],
-		conversationId: string
+	async notifyUsersAboutConversation(
+		worker: {
+			id: string;
+			name: string;
+			imageUrl: string;
+		},
+		lister: {
+			id: string;
+			name: string;
+			imageUrl: string;
+		},
+		conversation: Conversation,
+		message: Message
 	) {
-		for (const userId of userIds) {
+		for (let i = 0; i < 2; i++) {
+			const userId = i === 0 ? worker.id : lister.id;
 			const channel = ably.channels.get(`user:${userId}`);
+			const partner = i === 0 ? lister : worker;
 			channel.publish("new-conversation", {
-				conversationId,
+				conversation: {
+					id: conversation.id,
+					partner,
+				},
+				message: {
+					id: message.id,
+					content: message.content,
+					sentAt: message.sentAt,
+					senderId: message.senderId,
+				},
 			});
 		}
 	},

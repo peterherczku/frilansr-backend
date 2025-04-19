@@ -243,15 +243,17 @@ export async function selectApplication(
 		job.id
 	);
 
-	await Messages.createMessage(
+	const message = await Messages.createMessage(
 		converation.id,
 		job.listing.userId,
 		"Hey there! I accepted your application, please let me know if you have any further questions!"
 	);
 
-	await Messages.notifiyUsersAboutConversation(
-		[converation.workerId, converation.listerId],
-		converation.id
+	await Messages.notifyUsersAboutConversation(
+		jobWithUser.worker,
+		listingWithUser.user,
+		converation,
+		message
 	);
 
 	return {
