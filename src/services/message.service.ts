@@ -147,6 +147,7 @@ export async function getRecentConversations(userId: string, query: any) {
 export async function sendSeen(userId: string, body: any) {
 	const res = sendSeenSchema.safeParse(body);
 	if (!res.success) {
+		console.log(JSON.stringify(body));
 		throw new AppError("Invalid seen data", 400);
 	}
 	const { conversationId } = res.data;

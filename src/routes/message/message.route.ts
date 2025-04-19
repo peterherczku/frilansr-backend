@@ -5,8 +5,8 @@ import {
 	getMessages,
 	getRecentConversations,
 	sendMessage,
+	sendSeen,
 } from "../../controllers/message/message.controller.js";
-import { sendSeen } from "../../services/message.service.js";
 
 const router = Router();
 

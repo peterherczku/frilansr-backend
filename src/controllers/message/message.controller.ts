@@ -58,6 +58,7 @@ export async function sendSeen(
 ) {
 	try {
 		const { userId } = getAuth(req);
+		console.log(req.body.data);
 		await messageService.sendSeen(userId, req.body);
 		res.status(200).json({ success: true });
 	} catch (error) {
