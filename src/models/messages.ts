@@ -76,6 +76,24 @@ const Messages = {
 			take: limit,
 		});
 	},
+	async getAllConversationIds(userId: string) {
+		const conversations = await prisma.conversation.findMany({
+			where: {
+				OR: [
+					{
+						workerId: userId,
+					},
+					{
+						listerId: userId,
+					},
+				],
+			},
+			select: {
+				id: true,
+			},
+		});
+		return conversations.map((conversation) => conversation.id);
+	},
 };
 
 export { Messages };

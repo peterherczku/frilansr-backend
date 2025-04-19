@@ -11,8 +11,7 @@ export async function retrieveAblyToken(
 ) {
 	try {
 		const { userId } = getAuth(req);
-		const conversationId = req.query.conversationId as string;
-		const token = await ablyService.getAblyTokenForUser(userId, conversationId);
+		const token = await ablyService.getAblyTokenForUser(userId);
 		res.status(200).json(token);
 	} catch (error) {
 		next(error);

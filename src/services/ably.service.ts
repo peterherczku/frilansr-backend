@@ -2,7 +2,27 @@ import { ably } from "../lib/ably.js";
 import { AppError } from "../lib/error.js";
 import { Messages } from "../models/messages.js";
 
-export async function getAblyTokenForUser(
+export async function getAblyTokenForUser(userId: string) {
+	const capability = {};
+	capability[`user:${userId}`] = ["subscribe"];
+	const conversationIds = await Messages.getAllConversationIds(userId);
+	for (const conversationId of conversationIds) {
+		capability[conversationId] = ["publish", "subscribe"];
+	}
+	const tokenParams = {
+		clientId: userId,
+		capability: capability,
+	};
+	try {
+		const tokenRequest = await ably.auth.createTokenRequest(tokenParams);
+		return tokenRequest;
+	} catch (err) {
+		console.error("Ably token error:", err);
+		throw new AppError("Failed to create token", 500);
+	}
+}
+
+/*export async function getAblyTokenForUser(
 	userId: string,
 	conversationId: string
 ) {
@@ -33,4 +53,4 @@ export async function getAblyTokenForUser(
 		console.error("Ably token error:", err);
 		throw new AppError("Failed to create token", 500);
 	}
-}
+}*/
