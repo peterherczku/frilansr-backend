@@ -93,6 +93,13 @@ model Message {
   conversationAsLast Conversation? @relation("LastMessage")
 }
 
+model StripeAccount {
+  id               String  @id @default(cuid())
+  userId           String
+  stripeCustomerId String? @unique
+  stripeAccountId  String? @unique
+}
+
 enum JobType {
   DOG_WALKING
 }

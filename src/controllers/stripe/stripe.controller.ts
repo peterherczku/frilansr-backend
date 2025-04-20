@@ -1,0 +1,60 @@
+import { getAuth } from "@clerk/express";
+import { NextFunction, Request, Response } from "express";
+
+import * as stripeService from "../../services/stripe.service.js";
+
+export async function createConnectAccount(
+	req: Request,
+	res: Response,
+	next: NextFunction
+) {
+	try {
+		const { userId } = getAuth(req);
+		const accountId = await stripeService.createConnectAccount(userId);
+		res.status(201).json(accountId);
+	} catch (error) {
+		next(error);
+	}
+}
+
+export async function createCustomerAccount(
+	req: Request,
+	res: Response,
+	next: NextFunction
+) {
+	try {
+		const { userId } = getAuth(req);
+		const customerId = await stripeService.createCustomerAccount(userId);
+		res.status(201).json(customerId);
+	} catch (error) {
+		next(error);
+	}
+}
+
+export async function getAccountLink(
+	req: Request,
+	res: Response,
+	next: NextFunction
+) {
+	try {
+		const { userId } = getAuth(req);
+		const url = await stripeService.getAccountLink(userId);
+		res.status(201).json(url);
+	} catch (error) {
+		next(error);
+	}
+}
+
+export async function createSetupIntent(
+	req: Request,
+	res: Response,
+	next: NextFunction
+) {
+	try {
+		const { userId } = getAuth(req);
+		const clientSecret = await stripeService.createSetupIntent(userId);
+		res.status(201).json(clientSecret);
+	} catch (error) {
+		next(error);
+	}
+}
