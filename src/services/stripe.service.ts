@@ -9,7 +9,7 @@ export async function createConnectAccount(userId: string) {
 	if (user.publicMetadata.role !== "WORKER") {
 		throw new AppError("You are not a worker", 403);
 	}
-	if (Payments.getStripeId(userId)) {
+	if (await Payments.getStripeId(userId)) {
 		throw new AppError("You already have a connected account", 400);
 	}
 	const account = await stripe.accounts.create({
