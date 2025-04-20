@@ -170,6 +170,7 @@ export async function sendSeen(userId: string, body: any) {
 
 	const partnerId = getPartnerId(userId, conversation.participants);
 	const channel = ably.channels.get(`user:${partnerId}`);
+	console.log("channelName", `user:${partnerId}`);
 	channel.publish("seen", {
 		conversationId,
 		seenAt: seenAt.toISOString(),
