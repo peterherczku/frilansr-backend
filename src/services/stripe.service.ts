@@ -35,6 +35,7 @@ export async function createCustomerAccount(userId: string) {
 	if (user.publicMetadata.role !== "LISTER") {
 		throw new AppError("You are not a lister", 403);
 	}
+	console.log(Payments.getStripeId(userId));
 	if (Payments.getStripeId(userId)) {
 		throw new AppError("You already have a connected account", 400);
 	}
