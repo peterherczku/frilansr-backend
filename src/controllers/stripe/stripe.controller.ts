@@ -72,3 +72,19 @@ export async function hasAccount(
 		next(error);
 	}
 }
+
+export async function getCustomerPaymentMethods(
+	req: Request,
+	res: Response,
+	next: NextFunction
+) {
+	try {
+		const { userId } = getAuth(req);
+		const paymentMethods = await stripeService.getCustomerPaymentMethods(
+			userId
+		);
+		res.status(200).json(paymentMethods);
+	} catch (error) {
+		next(error);
+	}
+}

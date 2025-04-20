@@ -76,6 +76,29 @@ export async function getAccountLink(userId: string) {
 	return { url: accountLink.url };
 }
 
+export async function getCustomerPaymentMethods(userId: string) {
+	const user = await clerkClient.users.getUser(userId);
+	if (user.publicMetadata.role !== "LISTER") {
+		throw new AppError("You are not a lister", 403);
+	}
+	const stripeId = await Payments.getStripeId(userId);
+	if (!stripeId) {
+		throw new AppError("You don't have a connected account", 400);
+	}
+	const paymentMethods = await stripe.paymentMethods.list({
+		customer: stripeId,
+		type: "card",
+	});
+	const safe = paymentMethods.data.map((pm) => ({
+		id: pm.id,
+		brand: pm.card.brand,
+		last4: pm.card.last4,
+		exp_month: pm.card.exp_month,
+		exp_year: pm.card.exp_year,
+	}));
+	return { paymentMethods: safe };
+}
+
 export async function hasAccount(userId: string) {
 	const stripeId = await Payments.getStripeId(userId);
 	return { hasAccount: !!stripeId };
