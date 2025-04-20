@@ -75,3 +75,8 @@ export async function getAccountLink(userId: string) {
 	});
 	return { url: accountLink.url };
 }
+
+export async function hasAccount(userId: string) {
+	const stripeId = await Payments.getStripeId(userId);
+	return { hasAccount: !!stripeId };
+}

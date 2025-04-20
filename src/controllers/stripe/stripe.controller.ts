@@ -58,3 +58,17 @@ export async function createSetupIntent(
 		next(error);
 	}
 }
+
+export async function hasAccount(
+	req: Request,
+	res: Response,
+	next: NextFunction
+) {
+	try {
+		const { userId } = getAuth(req);
+		const hasAccount = await stripeService.hasAccount(userId);
+		res.status(200).json(hasAccount);
+	} catch (error) {
+		next(error);
+	}
+}
