@@ -7,6 +7,7 @@ export const Payments = {
 				userId,
 			},
 		});
+		if (!stripeAccount) return null;
 		if (!stripeAccount.stripeAccountId && stripeAccount.stripeCustomerId)
 			return stripeAccount.stripeCustomerId;
 		return stripeAccount.stripeAccountId;
