@@ -221,10 +221,7 @@ function getPartnerParticipant(
 	return partnerParticipant;
 }
 
-async function getPartnerId(
-	userId: string,
-	participants: ConversationParticipant[]
-) {
+function getPartnerId(userId: string, participants: ConversationParticipant[]) {
 	const partnerParticipant = participants.find((p) => p.userId !== userId);
 	const partnerId = partnerParticipant.userId ?? null;
 	if (!partnerId) {
@@ -237,7 +234,7 @@ async function getPartner(
 	userId: string,
 	participants: ConversationParticipant[]
 ) {
-	const partnerId = await getPartnerId(userId, participants);
+	const partnerId = getPartnerId(userId, participants);
 	const partner = await clerkClient.users.getUser(partnerId);
 	if (!partner) {
 		throw new AppError("Partner not found", 404);
