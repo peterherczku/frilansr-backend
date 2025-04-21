@@ -2,6 +2,7 @@ import { clerkClient } from "@clerk/express";
 import { AppError } from "../lib/error.js";
 import { stripe } from "../lib/stripe.js";
 import { Payments } from "../models/payments.js";
+import Stripe from "stripe";
 
 // for worker - connect bc connecting bank account
 export async function createConnectAccount(userId: string) {
@@ -113,8 +114,9 @@ export async function getConnectedAccountBankAccounts(userId: string) {
 	const bankAccounts = await stripe.accounts.listExternalAccounts(stripeId, {
 		object: "bank_account",
 	});
-	const safe = bankAccounts.data.map((ba) => ({
+	const safe = bankAccounts.data.map((ba: Stripe.BankAccount) => ({
 		id: ba.id,
+		bank: ba.bank_name,
 		last4: ba.last4,
 		country: ba.country,
 		currency: ba.currency,
