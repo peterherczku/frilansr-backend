@@ -114,14 +114,13 @@ export async function getConnectedAccountBankAccounts(userId: string) {
 	const bankAccounts = await stripe.accounts.listExternalAccounts(stripeId, {
 		object: "bank_account",
 	});
-	console.log(JSON.stringify(bankAccounts, null, 2));
 	const safe = bankAccounts.data.map((ba: Stripe.BankAccount) => ({
 		id: ba.id,
 		bank: ba.bank_name,
 		last4: ba.last4,
 		country: ba.country,
 		currency: ba.currency,
-		default: ba.default_for_currency,
+		default_for_currency: ba.default_for_currency,
 	}));
 	return { bankAccounts: safe };
 }
