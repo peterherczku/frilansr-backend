@@ -11,7 +11,6 @@ import {
 	getConnectedAccountBankAccounts,
 	setCustomerDefaultPaymetMethod,
 } from "../../controllers/stripe/stripe.controller.js";
-import { handleStripeWebhook } from "../../controllers/stripe/stripe.webhook.controller.js";
 
 const router = Router();
 
@@ -23,7 +22,6 @@ router.get(
 	requireAuth,
 	getConnectedAccountBankAccounts
 );
-router.post("/webhook", raw({ type: "application/json" }), handleStripeWebhook);
 router.post("/create-connect-account", requireAuth, createConnectAccount);
 router.post("/create-customer-account", requireAuth, createCustomerAccount);
 router.post(
