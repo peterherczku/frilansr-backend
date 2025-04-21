@@ -1,16 +1,21 @@
 import { prisma } from "../lib/prisma.js";
 
 export const Payments = {
-	async getStripeId(userId: string) {
+	async getCustomerAccountId(userId: string) {
 		const stripeAccount = await prisma.stripeAccount.findFirst({
 			where: {
 				userId,
 			},
 		});
-		if (!stripeAccount) return null;
-		if (!stripeAccount.stripeAccountId && stripeAccount.stripeCustomerId)
-			return stripeAccount.stripeCustomerId;
-		return stripeAccount.stripeAccountId;
+		return stripeAccount?.stripeCustomerId || null;
+	},
+	async getConnectAccountId(userId: string) {
+		const stripeAccount = await prisma.stripeAccount.findFirst({
+			where: {
+				userId,
+			},
+		});
+		return stripeAccount?.stripeAccountId || null;
 	},
 	async createConnectAccount(userId: string, stripeAccountId: string) {
 		return await prisma.stripeAccount.create({
