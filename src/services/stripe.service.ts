@@ -118,6 +118,7 @@ export async function getConnectedAccountBankAccounts(userId: string) {
 		last4: ba.last4,
 		country: ba.country,
 		currency: ba.currency,
+		default: ba.default_for_currency,
 	}));
 	return { bankAccounts: safe };
 }
