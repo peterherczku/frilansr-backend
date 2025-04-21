@@ -21,7 +21,8 @@ export async function handleStripeWebhook(
 			process.env.STRIPE_WEBHOOK_SECRET_TEST
 		);
 	} catch (err) {
-		throw new AppError("Webhook Error", 400);
+		console.log(JSON.stringify(err));
+		throw new AppError(`Webhook Error ${err.message}`, 400);
 	}
 
 	switch (event.type) {
