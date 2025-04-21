@@ -267,15 +267,13 @@ export async function selectApplication(
 		message
 	);
 
-	const netPayout = calculateNetPayout(
-		job.listing.salary,
-		job.listing.duration
-	);
+	const netPayout = calculateNetPayout(listing.salary, listing.duration);
 	try {
 		const paymentIntent = await stripe.paymentIntents.create({
 			amount: netPayout,
 			currency: "sek",
 			payment_method: paymentMethodId,
+			customer: listerStripeId,
 			off_session: true,
 			confirm: true,
 			capture_method: "automatic",
