@@ -95,7 +95,7 @@ model Message {
 
 model StripeAccount {
   id               String  @id @default(cuid())
-  userId           String
+  userId           String  @unique
   stripeCustomerId String? @unique
   stripeAccountId  String? @unique
 }

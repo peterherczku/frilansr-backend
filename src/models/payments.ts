@@ -25,6 +25,18 @@ export const Payments = {
 		return stripeAccount?.stripeAccountId || null;
 	},
 	async createConnectAccount(userId: string, stripeAccountId: string) {
+		await prisma.stripeAccount.upsert({
+			where: {
+				userId,
+			},
+			update: {
+				stripeAccountId,
+			},
+			create: {
+				userId,
+				stripeAccountId,
+			},
+		});
 		return await prisma.stripeAccount.create({
 			data: {
 				userId,
