@@ -1,3 +1,4 @@
+import { TransactionStatus } from "@prisma/client";
 import { prisma } from "../lib/prisma.js";
 
 export const Payments = {
@@ -49,6 +50,36 @@ export const Payments = {
 			create: {
 				userId,
 				stripeCustomerId,
+			},
+		});
+	},
+	async createTransaction(
+		jobId: string,
+		workerId: string,
+		listerId: string,
+		stripePaymentIntentId: string,
+		amount: number
+	) {
+		return await prisma.transaction.create({
+			data: {
+				jobId,
+				workerId,
+				listerId,
+				stripePaymentIntentId,
+				amount,
+			},
+		});
+	},
+	async updateTransactionStatus(
+		paymentIntentId: string,
+		status: TransactionStatus
+	) {
+		return await prisma.transaction.update({
+			where: {
+				stripePaymentIntentId: paymentIntentId,
+			},
+			data: {
+				status,
 			},
 		});
 	},

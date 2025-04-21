@@ -11,6 +11,11 @@ import {
 import { getJobWithWorker } from "./job.service.js";
 import { jitterLocation } from "../lib/locationUtil.js";
 import { Messages } from "../models/messages.js";
+import { stripe } from "../lib/stripe.js";
+import { calculateNetPayout } from "../lib/moneyUtil.js";
+import { Payments } from "../models/payments.js";
+import Stripe from "stripe";
+import { getDefaultPaymentMethodId } from "./stripe.service.js";
 
 export type ListingWithApplication = Prisma.ListingGetPayload<{
 	include: { applications: true };
@@ -233,6 +238,12 @@ export async function selectApplication(
 	if (listing.job !== null) {
 		throw new AppError("This listing is already taken", 400);
 	}
+	const listerStripeId = await Payments.getCustomerAccountId(userId);
+	if (!listerStripeId) {
+		throw new AppError("You don't have a connected account", 400);
+	}
+	const paymentMethodId = await getDefaultPaymentMethodId(listerStripeId);
+
 	const job = await Listings.selectApplication(application.userId, listingId);
 	const listingWithUser = await reduceListing(job.listing, false);
 	const jobWithUser = await getJobWithWorker(job);
@@ -256,10 +267,37 @@ export async function selectApplication(
 		message
 	);
 
-	return {
-		...jobWithUser,
-		listing: listingWithUser,
-	};
+	const netPayout = calculateNetPayout(
+		job.listing.salary,
+		job.listing.duration
+	);
+	try {
+		const paymentIntent = await stripe.paymentIntents.create({
+			amount: netPayout,
+			currency: "sek",
+			payment_method: paymentMethodId,
+			off_session: true,
+			confirm: true,
+			capture_method: "automatic",
+			description: "Payment for job " + job.id,
+			metadata: { jobId: job.id },
+			transfer_group: `job_${job.id}`,
+		});
+		await Payments.createTransaction(
+			job.id,
+			job.workerId,
+			job.listing.userId,
+			paymentIntent.id,
+			paymentIntent.amount
+		);
+
+		return {
+			...jobWithUser,
+			listing: listingWithUser,
+		};
+	} catch (err) {
+		throw new AppError(`Payment failed or requires action ${err.message}`, 402);
+	}
 }
 
 // private location

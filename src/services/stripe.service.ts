@@ -3,6 +3,7 @@ import { AppError } from "../lib/error.js";
 import { stripe } from "../lib/stripe.js";
 import { Payments } from "../models/payments.js";
 import Stripe from "stripe";
+import { setCustomerDefaultPaymetMethodSchema } from "../lib/validators.js";
 
 // for worker - connect bc connecting bank account
 export async function createConnectAccount(userId: string) {
@@ -92,14 +93,25 @@ export async function getCustomerPaymentMethods(userId: string) {
 		customer: stripeId,
 		type: "card",
 	});
+	const customer = (await stripe.customers.retrieve(stripeId, {
+		expand: ["invoice_settings.default_payment_method"],
+	})) as Stripe.Customer;
+
+	const defaultPm =
+		typeof customer.invoice_settings.default_payment_method === "string"
+			? customer.invoice_settings.default_payment_method
+			: customer.invoice_settings.default_payment_method?.id ?? null;
+
 	const safe = paymentMethods.data.map((pm) => ({
 		id: pm.id,
 		brand: pm.card.brand,
 		last4: pm.card.last4,
 		exp_month: pm.card.exp_month,
 		exp_year: pm.card.exp_year,
+		isDefault: pm.id === defaultPm,
 	}));
-	return { paymentMethods: safe };
+
+	return { paymentMethods: safe, defaultPaymentMethod: defaultPm };
 }
 
 export async function getConnectedAccountBankAccounts(userId: string) {
@@ -136,4 +148,45 @@ export async function hasAccount(userId: string) {
 		return { hasAccount: !!stripeID };
 	}
 	return { hasAccount: false };
+}
+
+export async function setCustomerDefaultPaymentMethod(
+	userId: string,
+	body: any
+) {
+	const res = setCustomerDefaultPaymetMethodSchema.safeParse(body);
+	if (!res.success) {
+		throw new AppError("Invalid request", 400);
+	}
+	const { paymentMethodId } = res.data;
+	const user = await clerkClient.users.getUser(userId);
+	if (user.publicMetadata.role !== "LISTER") {
+		throw new AppError("You are not a lister", 403);
+	}
+	const stripeId = await Payments.getCustomerAccountId(userId);
+	if (!stripeId) {
+		throw new AppError("You don't have a connected account", 400);
+	}
+	const paymentMethod = await stripe.paymentMethods.retrieve(paymentMethodId);
+	if (paymentMethod.customer !== stripeId) {
+		throw new AppError("Payment method does not belong to customer", 403);
+	}
+	await stripe.customers.update(stripeId, {
+		invoice_settings: { default_payment_method: paymentMethodId },
+	});
+	return { success: true };
+}
+
+export async function getDefaultPaymentMethodId(stripeId: string) {
+	const customer = (await stripe.customers.retrieve(stripeId, {
+		expand: ["invoice_settings.default_payment_method"],
+	})) as Stripe.Customer;
+	const defaultPm =
+		typeof customer.invoice_settings.default_payment_method === "string"
+			? customer.invoice_settings.default_payment_method
+			: customer.invoice_settings.default_payment_method?.id ?? null;
+	if (!defaultPm) {
+		throw new AppError("Default payment method not found", 404);
+	}
+	return defaultPm;
 }

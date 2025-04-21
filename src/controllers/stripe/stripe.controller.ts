@@ -104,3 +104,20 @@ export async function getConnectedAccountBankAccounts(
 		next(error);
 	}
 }
+
+export async function setCustomerDefaultPaymetMethod(
+	req: Request,
+	res: Response,
+	next: NextFunction
+) {
+	try {
+		const { userId } = getAuth(req);
+		const customerId = await stripeService.setCustomerDefaultPaymentMethod(
+			userId,
+			req.body
+		);
+		res.status(200).json(customerId);
+	} catch (error) {
+		next(error);
+	}
+}

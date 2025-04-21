@@ -1,0 +1,5 @@
+-- CreateEnum
+CREATE TYPE "TransactionStatus" AS ENUM ('ON_WAY_TO_FRILASNSR', 'ARRIVED_AT_FRILANSR', 'ON_WAY_TO_DESTINATION', 'ARRIVED_AT_DESTINATION');
+
+-- AlterTable
+ALTER TABLE "Transaction" ADD COLUMN     "transferId" TEXT;

@@ -102,11 +102,14 @@ model StripeAccount {
 }
 
 model Transaction {
-  id       String @id @default(cuid())
-  workerId String
-  listerId String
-  jobId    String @unique
-  job      Job    @relation("JobTransaction", fields: [jobId], references: [id])
+  id                    String            @id @default(cuid())
+  workerId              String
+  listerId              String
+  jobId                 String            @unique
+  job                   Job               @relation("JobTransaction", fields: [jobId], references: [id])
+  stripePaymentIntentId String            @unique
+  stripeTransferId      String?           @unique
+  status                TransactionStatus @default(ON_WAY_TO_FRILASNSR)
 
   amount    Int
   createdAt DateTime @default(now())
@@ -132,4 +135,11 @@ enum ApplicationStatus {
   PENDING
   ACCEPTED
   REJECTED
+}
+
+enum TransactionStatus {
+  ON_WAY_TO_FRILASNSR
+  ARRIVED_AT_FRILANSR
+  ON_WAY_TO_DESTINATION
+  ARRIVED_AT_DESTINATION
 }

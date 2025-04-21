@@ -101,3 +101,7 @@ export const getRecentConversationsSchema = z.object({
 export const getConversationSchema = z.object({
 	id: z.string(),
 });
+
+export const setCustomerDefaultPaymetMethodSchema = z.object({
+	paymentMethodId: z.string(),
+});
