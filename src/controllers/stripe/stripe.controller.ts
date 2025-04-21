@@ -121,3 +121,17 @@ export async function setCustomerDefaultPaymetMethod(
 		next(error);
 	}
 }
+
+export async function getOutgoingPayments(
+	req: Request,
+	res: Response,
+	next: NextFunction
+) {
+	try {
+		const { userId } = getAuth(req);
+		const outgoingPayments = await stripeService.getOutgoingPayments(userId);
+		res.status(200).json(outgoingPayments);
+	} catch (error) {
+		next(error);
+	}
+}

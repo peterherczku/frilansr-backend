@@ -10,6 +10,7 @@ import {
 	getCustomerPaymentMethods,
 	getConnectedAccountBankAccounts,
 	setCustomerDefaultPaymetMethod,
+	getOutgoingPayments,
 } from "../../controllers/stripe/stripe.controller.js";
 
 const router = Router();
@@ -22,6 +23,7 @@ router.get(
 	requireAuth,
 	getConnectedAccountBankAccounts
 );
+router.get("/outgoing-payments", requireAuth, getOutgoingPayments);
 router.post("/create-connect-account", requireAuth, createConnectAccount);
 router.post("/create-customer-account", requireAuth, createCustomerAccount);
 router.post(

@@ -83,4 +83,11 @@ export const Payments = {
 			},
 		});
 	},
+	async getTransactionsForLister(userId: string) {
+		return await prisma.transaction.findMany({
+			where: {
+				listerId: userId,
+			},
+		});
+	},
 };

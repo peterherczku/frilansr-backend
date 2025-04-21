@@ -190,3 +190,24 @@ export async function getDefaultPaymentMethodId(stripeId: string) {
 	}
 	return defaultPm;
 }
+
+export async function getOutgoingPayments(userId: string) {
+	const user = await clerkClient.users.getUser(userId);
+	if (user.publicMetadata.role !== "LISTER") {
+		throw new AppError("You are not a lister", 403);
+	}
+	const stripeId = await Payments.getCustomerAccountId(userId);
+	if (!stripeId) {
+		throw new AppError("You don't have a connected account", 400);
+	}
+	const transactions = await Payments.getTransactionsForLister(userId);
+	if (!transactions) return [];
+
+	const safe = transactions.map((transaction) => ({
+		id: transaction.id,
+		amount: transaction.amount,
+		status: transaction.status,
+		createdAt: transaction.createdAt,
+	}));
+	return { outgoingPayments: safe };
+}
