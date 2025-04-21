@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { raw, Router } from "express";
 import { requireAuth } from "../../middlewares/authMiddleware.js";
 import bodyParser from "body-parser";
 import {
@@ -23,11 +23,7 @@ router.get(
 	requireAuth,
 	getConnectedAccountBankAccounts
 );
-router.post(
-	"/webhook",
-	bodyParser.raw({ type: "application/json" }),
-	handleStripeWebhook
-);
+router.post("/webhook", raw({ type: "application/json" }), handleStripeWebhook);
 router.post("/create-connect-account", requireAuth, createConnectAccount);
 router.post("/create-customer-account", requireAuth, createCustomerAccount);
 router.post(
