@@ -70,8 +70,8 @@ export async function getAccountLink(userId: string) {
 	}
 	const accountLink = await stripe.accountLinks.create({
 		account: stripeId,
-		refresh_url: `${process.env.FRONTEND_URL}/settings/payments`,
-		return_url: `${process.env.FRONTEND_URL}/settings/payments`,
+		refresh_url: `https://yourapp.com/stripe-refresh`,
+		return_url: `https://yourapp.com/stripe-return`,
 		type: "account_onboarding",
 	});
 	return { url: accountLink.url };
