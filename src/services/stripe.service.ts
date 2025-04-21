@@ -101,6 +101,27 @@ export async function getCustomerPaymentMethods(userId: string) {
 	return { paymentMethods: safe };
 }
 
+export async function getConnectedAccountBankAccounts(userId: string) {
+	const user = await clerkClient.users.getUser(userId);
+	if (user.publicMetadata.role !== "WORKER") {
+		throw new AppError("You are not a worker", 403);
+	}
+	const stripeId = await Payments.getConnectAccountId(userId);
+	if (!stripeId) {
+		throw new AppError("You don't have a connected account", 400);
+	}
+	const bankAccounts = await stripe.accounts.listExternalAccounts(stripeId, {
+		object: "bank_account",
+	});
+	const safe = bankAccounts.data.map((ba) => ({
+		id: ba.id,
+		last4: ba.last4,
+		country: ba.country,
+		currency: ba.currency,
+	}));
+	return { bankAccounts: safe };
+}
+
 export async function hasAccount(userId: string) {
 	const user = await clerkClient.users.getUser(userId);
 	if (user.publicMetadata.role === "LISTER") {

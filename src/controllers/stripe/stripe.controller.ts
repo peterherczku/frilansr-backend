@@ -88,3 +88,19 @@ export async function getCustomerPaymentMethods(
 		next(error);
 	}
 }
+
+export async function getConnectedAccountBankAccounts(
+	req: Request,
+	res: Response,
+	next: NextFunction
+) {
+	try {
+		const { userId } = getAuth(req);
+		const bankAccounts = await stripeService.getConnectedAccountBankAccounts(
+			userId
+		);
+		res.status(200).json(bankAccounts);
+	} catch (error) {
+		next(error);
+	}
+}
