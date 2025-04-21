@@ -42,6 +42,7 @@ model Job {
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   Conversation Conversation[]
+  transaction  Transaction?   @relation("JobTransaction")
 }
 
 model Application {
@@ -98,6 +99,18 @@ model StripeAccount {
   userId           String  @unique
   stripeCustomerId String? @unique
   stripeAccountId  String? @unique
+}
+
+model Transaction {
+  id       String @id @default(cuid())
+  workerId String
+  listerId String
+  jobId    String @unique
+  job      Job    @relation("JobTransaction", fields: [jobId], references: [id])
+
+  amount    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum JobType {
