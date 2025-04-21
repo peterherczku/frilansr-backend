@@ -5,6 +5,9 @@ export const Payments = {
 		const stripeAccount = await prisma.stripeAccount.findFirst({
 			where: {
 				userId,
+				stripeCustomerId: {
+					not: null,
+				},
 			},
 		});
 		return stripeAccount?.stripeCustomerId || null;
@@ -13,8 +16,12 @@ export const Payments = {
 		const stripeAccount = await prisma.stripeAccount.findFirst({
 			where: {
 				userId,
+				stripeAccountId: {
+					not: null,
+				},
 			},
 		});
+
 		return stripeAccount?.stripeAccountId || null;
 	},
 	async createConnectAccount(userId: string, stripeAccountId: string) {
