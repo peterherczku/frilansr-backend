@@ -43,6 +43,14 @@ const Jobs = {
 			},
 		});
 	},
+	async getOngoingJobForWorker(userId: string) {
+		return await prisma.job.findFirst({
+			where: {
+				workerId: userId,
+				status: "IN_PROGRESS",
+			},
+		});
+	},
 };
 
 export { Jobs };

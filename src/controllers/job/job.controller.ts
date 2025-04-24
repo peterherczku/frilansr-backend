@@ -30,3 +30,16 @@ export async function activeWorkerJobs(
 		next(error);
 	}
 }
+
+export async function ongoingJobForWorker(
+	req: Request,
+	res: Response,
+	next: NextFunction
+) {
+	try {
+		const { userId } = getAuth(req);
+		const result = await jobService.getOngoingJob(userId);
+	} catch (error) {
+		next(error);
+	}
+}

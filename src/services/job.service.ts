@@ -68,6 +68,18 @@ export async function startJob(userId: string, jobId: string) {
 	return res;
 }
 
+export async function getOngoingJob(userId: string) {
+	const user = await clerkClient.users.getUser(userId);
+	if (user.publicMetadata.role !== "WORKER") {
+		throw new AppError("You are not a worker", 403);
+	}
+	const job = await Jobs.getOngoingJobForWorker(userId);
+	if (!job) {
+		return [];
+	}
+	return [job];
+}
+
 export async function extendJobs(
 	jobs: JobWithListing[],
 	jitterLocation = true
