@@ -33,6 +33,16 @@ const Jobs = {
 			},
 		});
 	},
+	async startJob(jobId: string) {
+		return await prisma.job.update({
+			where: {
+				id: jobId,
+			},
+			data: {
+				status: "IN_PROGRESS",
+			},
+		});
+	},
 };
 
 export { Jobs };

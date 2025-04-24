@@ -3,6 +3,7 @@ import { AppError } from "../lib/error.js";
 import { Job, Prisma } from "@prisma/client";
 import { Jobs } from "../models/job.js";
 import { extendWithUser, reduceListing } from "./listing.service.js";
+import { diffInMilliseconds, FIVE_MINUTES_IN_MILLIS } from "../lib/dateUtil.js";
 
 export type JobWithListing = Prisma.JobGetPayload<{
 	include: { listing: true };
@@ -44,6 +45,27 @@ export async function getActiveWorkerJobs(userId: string) {
 	if (!jobs) return [];
 
 	return await extendJobs(jobs, false);
+}
+
+export async function startJob(userId: string, jobId: string) {
+	const user = await clerkClient.users.getUser(userId);
+	if (user.publicMetadata.role !== "WORKER") {
+		throw new AppError("You are not a worker", 403);
+	}
+	const job = await Jobs.getJob(jobId);
+	if (!job) {
+		throw new AppError("Job not found", 404);
+	}
+	if (job.workerId !== userId) {
+		throw new AppError("You are not authorized to start this job");
+	}
+	if (diffInMilliseconds(job.listing.date) > FIVE_MINUTES_IN_MILLIS) {
+		throw new AppError(
+			"You cannot start a work more then 5 minutes before the date of it."
+		);
+	}
+	const res = await Jobs.startJob(jobId);
+	return res;
 }
 
 export async function extendJobs(

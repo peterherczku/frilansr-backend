@@ -12,3 +12,18 @@ export async function getJob(req: Request, res: Response, next: NextFunction) {
 		next(error);
 	}
 }
+
+export async function startJob(
+	req: Request,
+	res: Response,
+	next: NextFunction
+) {
+	try {
+		const { userId } = getAuth(req);
+		const jobId = req.params["id"];
+		const result = await jobService.startJob(userId, jobId);
+		res.status(200).json(result);
+	} catch (error) {
+		next(error);
+	}
+}
