@@ -40,6 +40,7 @@ const Jobs = {
 			},
 			data: {
 				status: "IN_PROGRESS",
+				startTime: new Date(),
 			},
 		});
 	},

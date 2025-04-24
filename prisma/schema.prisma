@@ -41,6 +41,7 @@ model Job {
   status       JobStatus      @default(WAITING_FOR_WORKER)
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
+  startTime    DateTime?
   Conversation Conversation[]
   transaction  Transaction?   @relation("JobTransaction")
 }

@@ -78,7 +78,7 @@ export async function getOngoingJob(userId: string) {
 	if (!job) {
 		return [];
 	}
-	return [await getJobWithWorker(job)];
+	return [await getOngoingJobWithWorker(job)];
 }
 
 export async function extendJobs(
@@ -104,6 +104,22 @@ export async function getJobWithWorker(job: Job) {
 		status: job.status,
 		createdAt: job.createdAt,
 		updatedAt: job.updatedAt,
+		worker: {
+			id: user.id,
+			name: user.fullName,
+			imageUrl: user.imageUrl,
+		},
+	};
+}
+
+export async function getOngoingJobWithWorker(job: Job) {
+	const user = await clerkClient.users.getUser(job.workerId);
+	return {
+		id: job.id,
+		status: job.status,
+		createdAt: job.createdAt,
+		updatedAt: job.updatedAt,
+		startTime: job.startTime,
 		worker: {
 			id: user.id,
 			name: user.fullName,
