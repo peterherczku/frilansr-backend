@@ -42,6 +42,9 @@ const Jobs = {
 				status: "IN_PROGRESS",
 				startTime: new Date(),
 			},
+			include: {
+				listing: true,
+			},
 		});
 	},
 	async getOngoingJobForWorker(userId: string) {
@@ -49,6 +52,9 @@ const Jobs = {
 			where: {
 				workerId: userId,
 				status: "IN_PROGRESS",
+			},
+			include: {
+				listing: true,
 			},
 		});
 	},

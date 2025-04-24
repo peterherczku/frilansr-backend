@@ -65,8 +65,12 @@ export async function startJob(userId: string, jobId: string) {
 		);
 	}
 	const rawRes = await Jobs.startJob(jobId);
-	const res = await getJobWithWorker(rawRes);
-	return res;
+	const jobWithUser = await getOngoingJobWithWorker(rawRes);
+	const listingWithUser = await reduceListing(rawRes.listing, false);
+	return {
+		...jobWithUser,
+		listing: listingWithUser,
+	};
 }
 
 export async function getOngoingJob(userId: string) {
@@ -78,7 +82,13 @@ export async function getOngoingJob(userId: string) {
 	if (!job) {
 		return [];
 	}
-	return [await getOngoingJobWithWorker(job)];
+	const jobWithUser = await getOngoingJobWithWorker(job);
+	const listingWithUser = await reduceListing(job.listing, false);
+	const res = {
+		...jobWithUser,
+		listing: listingWithUser,
+	};
+	return [res];
 }
 
 export async function extendJobs(
