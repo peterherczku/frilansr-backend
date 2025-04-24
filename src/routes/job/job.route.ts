@@ -10,7 +10,7 @@ import {
 
 const router = Router();
 
-router.get("ongoing-worker", requireAuth, ongoingJobForWorker);
+router.get("/ongoing-worker", requireAuth, ongoingJobForWorker);
 router.get("/active-worker", requireAuth, activeWorkerJobs);
 router.get("/active", requireAuth, activeJobs);
 router.use("/:id", requireJobId, jobIdRoutes);
