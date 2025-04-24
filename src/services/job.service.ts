@@ -64,7 +64,8 @@ export async function startJob(userId: string, jobId: string) {
 			"You cannot start a work more then 5 minutes before the date of it."
 		);
 	}
-	const res = await Jobs.startJob(jobId);
+	const rawRes = await Jobs.startJob(jobId);
+	const res = await getJobWithWorker(rawRes);
 	return res;
 }
 
