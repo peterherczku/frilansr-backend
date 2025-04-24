@@ -77,7 +77,7 @@ export async function getOngoingJob(userId: string) {
 	if (!job) {
 		return [];
 	}
-	return [job];
+	return [await getJobWithWorker(job)];
 }
 
 export async function extendJobs(
