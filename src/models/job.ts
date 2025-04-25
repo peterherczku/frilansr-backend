@@ -11,6 +11,17 @@ const Jobs = {
 			},
 		});
 	},
+	async getJobWithTransaction(jobId) {
+		return await prisma.job.findFirst({
+			where: {
+				id: jobId,
+			},
+			include: {
+				listing: true,
+				transaction: true,
+			},
+		});
+	},
 	async activeJobs(userId: string) {
 		return await prisma.job.findMany({
 			where: {
@@ -41,6 +52,19 @@ const Jobs = {
 			data: {
 				status: "IN_PROGRESS",
 				startTime: new Date(),
+			},
+			include: {
+				listing: true,
+			},
+		});
+	},
+	async stopJob(jobId: string) {
+		return await prisma.job.update({
+			where: {
+				id: jobId,
+			},
+			data: {
+				stopTime: new Date(),
 			},
 			include: {
 				listing: true,

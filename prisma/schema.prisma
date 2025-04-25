@@ -42,6 +42,7 @@ model Job {
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   startTime    DateTime?
+  stopTime     DateTime?
   Conversation Conversation[]
   transaction  Transaction?   @relation("JobTransaction")
 }

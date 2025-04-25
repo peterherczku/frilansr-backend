@@ -4,9 +4,15 @@ import { Job, Prisma } from "@prisma/client";
 import { Jobs } from "../models/job.js";
 import { extendWithUser, reduceListing } from "./listing.service.js";
 import { diffInMilliseconds, FIVE_MINUTES_IN_MILLIS } from "../lib/dateUtil.js";
+import { stripe } from "../lib/stripe.js";
+import { Payments } from "../models/payments.js";
 
 export type JobWithListing = Prisma.JobGetPayload<{
 	include: { listing: true };
+}>;
+
+export type JobWithListingAndTransaction = Prisma.JobGetPayload<{
+	include: { listing: true; transaction: true };
 }>;
 
 // private location
@@ -66,6 +72,40 @@ export async function startJob(userId: string, jobId: string) {
 	}
 	const rawRes = await Jobs.startJob(jobId);
 	const jobWithUser = await getOngoingJobWithWorker(rawRes);
+	const listingWithUser = await reduceListing(rawRes.listing, false);
+	return {
+		...jobWithUser,
+		listing: listingWithUser,
+	};
+}
+
+export async function stopJob(userId: string, jobId: string) {
+	const user = await clerkClient.users.getUser(userId);
+	if (user.publicMetadata.role !== "WORKER") {
+		throw new AppError("You are not a worker", 403);
+	}
+	const job = await Jobs.getJobWithTransaction(jobId);
+	if (!job) {
+		throw new AppError("Job not found", 404);
+	}
+	if (job.workerId !== userId) {
+		throw new AppError("You are not authorized to start this job");
+	}
+	if (job.status !== "IN_PROGRESS") {
+		throw new AppError("This job is not in progress!");
+	}
+	const durationInMillis = job.listing.duration * 1000;
+	const expectedFinishDate = new Date(
+		job.startTime.getTime() + durationInMillis
+	);
+	if (diffInMilliseconds(expectedFinishDate) >= FIVE_MINUTES_IN_MILLIS) {
+		throw new AppError(
+			"You cannot stop a job more than 5 minutes prior to its expected end."
+		);
+	}
+	const rawRes = await Jobs.stopJob(jobId);
+	await processPayoutForJob(job);
+	const jobWithUser = await getFinishedJobWithWorker(rawRes);
 	const listingWithUser = await reduceListing(rawRes.listing, false);
 	return {
 		...jobWithUser,
@@ -136,4 +176,74 @@ export async function getOngoingJobWithWorker(job: Job) {
 			imageUrl: user.imageUrl,
 		},
 	};
+}
+
+export async function getFinishedJobWithWorker(job: Job) {
+	const user = await clerkClient.users.getUser(job.workerId);
+	return {
+		id: job.id,
+		status: job.status,
+		createdAt: job.createdAt,
+		updatedAt: job.updatedAt,
+		startTime: job.startTime,
+		stopTime: job.stopTime,
+		worker: {
+			id: user.id,
+			name: user.fullName,
+			imageUrl: user.imageUrl,
+		},
+	};
+}
+
+async function processPayoutForJob(job: JobWithListingAndTransaction) {
+	// Fetch job with relations
+	if (!job || !job.transaction.stripePaymentIntentId) {
+		throw new Error("Missing data for payout");
+	}
+	const amount = job.listing.salary;
+	const feePercent = 0.025; // 2.5% fee
+	const feeAmount = Math.round(amount * feePercent); // fee in cents
+	const transferAmount = amount - feeAmount;
+	// Retrieve the charge ID from PaymentIntent
+	const paymentIntent = await stripe.paymentIntents.retrieve(
+		job.transaction.stripePaymentIntentId,
+		{ expand: ["charges"] }
+	);
+	let chargeId;
+	if (typeof paymentIntent.latest_charge === "string") {
+		chargeId = paymentIntent.latest_charge;
+	} else {
+		chargeId = paymentIntent.latest_charge.id;
+	}
+	if (!chargeId) throw new Error("Charge not found on PaymentIntent");
+
+	const workerStripeAccountId = await Payments.getConnectAccountId(
+		job.workerId
+	);
+
+	// Create transfer to worker's account
+	const transfer = await stripe.transfers.create({
+		amount: transferAmount,
+		currency: "usd",
+		destination: workerStripeAccountId,
+		transfer_group: `job_${job.id}`,
+		source_transaction: chargeId,
+	});
+	await Payments.updateTransactionStatus(
+		paymentIntent.id,
+		"ON_WAY_TO_DESTINATION"
+	);
+
+	// (Optional) Trigger payout to worker's bank immediately
+	// This step is optional if the worker's Stripe account is on automatic payouts (default daily).
+	// If on manual payout schedule, we must create a payout.
+	await stripe.payouts.create(
+		{
+			amount: transferAmount,
+			currency: "sek",
+		},
+		{
+			stripeAccount: workerStripeAccountId,
+		}
+	);
 }

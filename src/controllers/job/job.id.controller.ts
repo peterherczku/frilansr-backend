@@ -27,3 +27,18 @@ export async function startJob(
 		next(error);
 	}
 }
+
+export async function stopJobByWorker(
+	req: Request,
+	res: Response,
+	next: NextFunction
+) {
+	try {
+		const { userId } = getAuth(req);
+		const jobId = req.params["id"];
+		const result = await jobService.stopJob(userId, jobId);
+		res.status(200).json(result);
+	} catch (error) {
+		next(error);
+	}
+}
