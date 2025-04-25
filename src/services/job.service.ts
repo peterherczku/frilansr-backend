@@ -224,7 +224,7 @@ async function processPayoutForJob(job: JobWithListingAndTransaction) {
 	// Create transfer to worker's account
 	const transfer = await stripe.transfers.create({
 		amount: transferAmount,
-		currency: "usd",
+		currency: "sek",
 		destination: workerStripeAccountId,
 		transfer_group: `job_${job.id}`,
 		source_transaction: chargeId,
