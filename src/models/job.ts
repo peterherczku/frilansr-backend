@@ -65,6 +65,7 @@ const Jobs = {
 			},
 			data: {
 				stopTime: new Date(),
+				status: "COMPLETED",
 			},
 			include: {
 				listing: true,

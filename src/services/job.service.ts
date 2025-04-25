@@ -104,7 +104,7 @@ export async function stopJob(userId: string, jobId: string) {
 		);
 	}
 	const rawRes = await Jobs.stopJob(jobId);
-	await processPayoutForJob(job);
+	await endJob(job);
 	const jobWithUser = await getFinishedJobWithWorker(rawRes);
 	const listingWithUser = await reduceListing(rawRes.listing, false);
 	return {
@@ -195,7 +195,7 @@ export async function getFinishedJobWithWorker(job: Job) {
 	};
 }
 
-async function processPayoutForJob(job: JobWithListingAndTransaction) {
+async function endJob(job: JobWithListingAndTransaction) {
 	// Fetch job with relations
 	if (!job || !job.transaction.stripePaymentIntentId) {
 		throw new Error("Missing data for payout");
@@ -239,7 +239,7 @@ async function processPayoutForJob(job: JobWithListingAndTransaction) {
 	// If on manual payout schedule, we must create a payout.
 	await stripe.payouts.create(
 		{
-			amount: transferAmount,
+			amount: transfer.amount,
 			currency: "sek",
 		},
 		{
