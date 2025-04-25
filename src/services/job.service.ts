@@ -103,8 +103,8 @@ export async function stopJob(userId: string, jobId: string) {
 			"You cannot stop a job more than 5 minutes prior to its expected end."
 		);
 	}
+	await processPayout(job);
 	const rawRes = await Jobs.stopJob(jobId);
-	await endJob(job);
 	const jobWithUser = await getFinishedJobWithWorker(rawRes);
 	const listingWithUser = await reduceListing(rawRes.listing, false);
 	return {
@@ -195,7 +195,7 @@ export async function getFinishedJobWithWorker(job: Job) {
 	};
 }
 
-async function endJob(job: JobWithListingAndTransaction) {
+async function processPayout(job: JobWithListingAndTransaction) {
 	// Fetch job with relations
 	if (!job || !job.transaction.stripePaymentIntentId) {
 		throw new Error("Missing data for payout");
