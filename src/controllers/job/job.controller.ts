@@ -39,6 +39,7 @@ export async function ongoingJobForWorker(
 	try {
 		const { userId } = getAuth(req);
 		const result = await jobService.getOngoingJob(userId);
+		res.status(200).json(result);
 	} catch (error) {
 		next(error);
 	}
