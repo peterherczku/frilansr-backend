@@ -203,7 +203,7 @@ async function endJob(job: JobWithListingAndTransaction) {
 	// Retrieve the charge ID from PaymentIntent
 	const paymentIntent = await stripe.paymentIntents.retrieve(
 		job.transaction.stripePaymentIntentId,
-		{ expand: ["charges", "charges.balance_transaction"] }
+		{ expand: ["charges", "charges.data.balance_transaction"] }
 	);
 	if (typeof paymentIntent.latest_charge === "string") {
 		throw new Error("Charge not found");
