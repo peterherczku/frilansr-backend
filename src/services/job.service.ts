@@ -205,9 +205,8 @@ async function endJob(job: JobWithListingAndTransaction) {
 		job.transaction.stripePaymentIntentId,
 		{
 			expand: [
-				"charges",
-				"latest_charge",
-				"latest_charge.data.balance_transaction",
+				"latest_charge.balance_transaction", // directly expand the balance transaction
+				"latest_charge", // you don’t need "charges" if you only care about the latest
 			],
 		}
 	);
