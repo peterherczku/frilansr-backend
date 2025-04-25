@@ -233,17 +233,4 @@ async function endJob(job: JobWithListingAndTransaction) {
 		paymentIntent.id,
 		"ON_WAY_TO_DESTINATION"
 	);
-
-	// (Optional) Trigger payout to worker's bank immediately
-	// This step is optional if the worker's Stripe account is on automatic payouts (default daily).
-	// If on manual payout schedule, we must create a payout.
-	await stripe.payouts.create(
-		{
-			amount: transfer.amount,
-			currency: "sek",
-		},
-		{
-			stripeAccount: workerStripeAccountId,
-		}
-	);
 }
