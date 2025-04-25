@@ -200,10 +200,6 @@ async function processPayoutForJob(job: JobWithListingAndTransaction) {
 	if (!job || !job.transaction.stripePaymentIntentId) {
 		throw new Error("Missing data for payout");
 	}
-	const amount = job.listing.salary;
-	const feePercent = 0.025; // 2.5% fee
-	const feeAmount = Math.round(amount * feePercent); // fee in cents
-	const transferAmount = amount - feeAmount;
 	// Retrieve the charge ID from PaymentIntent
 	const paymentIntent = await stripe.paymentIntents.retrieve(
 		job.transaction.stripePaymentIntentId,
@@ -220,6 +216,10 @@ async function processPayoutForJob(job: JobWithListingAndTransaction) {
 	const workerStripeAccountId = await Payments.getConnectAccountId(
 		job.workerId
 	);
+	const amount = paymentIntent.amount;
+	const feePercent = 0.025; // 2.5% fee
+	const feeAmount = Math.round(amount * feePercent); // fee in cents
+	const transferAmount = amount - feeAmount;
 
 	// Create transfer to worker's account
 	const transfer = await stripe.transfers.create({
