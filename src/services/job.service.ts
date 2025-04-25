@@ -203,23 +203,24 @@ async function endJob(job: JobWithListingAndTransaction) {
 	// Retrieve the charge ID from PaymentIntent
 	const paymentIntent = await stripe.paymentIntents.retrieve(
 		job.transaction.stripePaymentIntentId,
-		{ expand: ["charges"] }
+		{ expand: ["charges", "charges.balance_transaction"] }
 	);
-	let chargeId;
 	if (typeof paymentIntent.latest_charge === "string") {
-		chargeId = paymentIntent.latest_charge;
-	} else {
-		chargeId = paymentIntent.latest_charge.id;
+		throw new Error("Charge not found");
 	}
-	if (!chargeId) throw new Error("Charge not found on PaymentIntent");
+	const charge = paymentIntent.latest_charge;
+	if (!charge) throw new Error("Charge not found on PaymentIntent");
 
 	const workerStripeAccountId = await Payments.getConnectAccountId(
 		job.workerId
 	);
+	if (typeof charge.balance_transaction === "string")
+		throw new Error("Charge balance transaction not found");
+	const stripeFee = charge.balance_transaction.fee;
 	const amount = paymentIntent.amount;
 	const feePercent = 0.025; // 2.5% fee
 	const feeAmount = Math.round(amount * feePercent); // fee in cents
-	const transferAmount = amount - feeAmount;
+	const transferAmount = amount - feeAmount - stripeFee;
 
 	// Create transfer to worker's account
 	const transfer = await stripe.transfers.create({
@@ -227,7 +228,7 @@ async function endJob(job: JobWithListingAndTransaction) {
 		currency: "sek",
 		destination: workerStripeAccountId,
 		transfer_group: `job_${job.id}`,
-		source_transaction: chargeId,
+		source_transaction: charge.id,
 	});
 	await Payments.updateTransactionStatus(
 		paymentIntent.id,
