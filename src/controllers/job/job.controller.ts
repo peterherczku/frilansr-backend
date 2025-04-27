@@ -53,6 +53,7 @@ export async function recentJobsForWorker(
 	try {
 		const { userId } = getAuth(req);
 		const result = await jobService.getRecentJobsForWorker(userId);
+		console.log(result);
 		res.status(200).json(result);
 	} catch (error) {
 		next(error);
