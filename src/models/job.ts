@@ -91,6 +91,21 @@ const Jobs = {
 			},
 		});
 	},
+	async getRecentJobsForWorker(userId: string) {
+		return await prisma.job.findMany({
+			where: {
+				workerId: userId,
+				status: "COMPLETED",
+			},
+			include: {
+				listing: true,
+			},
+			orderBy: {
+				stopTime: "desc",
+			},
+			take: 3,
+		});
+	},
 };
 
 export { Jobs };

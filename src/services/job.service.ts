@@ -113,6 +113,16 @@ export async function stopJob(userId: string, jobId: string) {
 	};
 }
 
+export async function getRecentJobsForWorker(userId: string) {
+	const user = await clerkClient.users.getUser(userId);
+	if (user.publicMetadata.role !== "WORKER") {
+		throw new AppError("You are not a worker", 403);
+	}
+	const recentJobs = await Jobs.getRecentJobsForWorker(userId);
+	const extendedRecentJobs = await extendFinishedJobs(recentJobs);
+	return extendFinishedJobs;
+}
+
 export async function getOngoingJob(userId: string) {
 	const user = await clerkClient.users.getUser(userId);
 	if (user.publicMetadata.role !== "WORKER") {
@@ -147,6 +157,21 @@ export async function extendJobs(
 	);
 }
 
+export async function extendFinishedJobs(
+	jobs: JobWithListing[],
+	jitterLocation = true
+) {
+	return Promise.all(
+		jobs.map(async (job) => {
+			const jobWithWorker = await getFinishedJobWithWorker(job);
+			const listingWithUser = await reduceListing(job.listing, jitterLocation);
+			return {
+				...jobWithWorker,
+				listing: listingWithUser,
+			};
+		})
+	);
+}
 export async function getJobWithWorker(job: Job) {
 	const user = await clerkClient.users.getUser(job.workerId);
 	return {
@@ -194,7 +219,6 @@ export async function getFinishedJobWithWorker(job: Job) {
 		},
 	};
 }
-
 async function processPayout(job: JobWithListingAndTransaction) {
 	// Fetch job with relations
 	if (!job || !job.transaction.stripePaymentIntentId) {

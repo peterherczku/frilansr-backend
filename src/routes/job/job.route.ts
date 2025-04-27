@@ -6,12 +6,14 @@ import {
 	activeJobs,
 	activeWorkerJobs,
 	ongoingJobForWorker,
+	recentJobsForWorker,
 } from "../../controllers/job/job.controller.js";
 
 const router = Router();
 
 router.get("/ongoing-worker", requireAuth, ongoingJobForWorker);
 router.get("/active-worker", requireAuth, activeWorkerJobs);
+router.get("/recent-jobs-worker", requireAuth, recentJobsForWorker);
 router.get("/active", requireAuth, activeJobs);
 router.use("/:id", requireJobId, jobIdRoutes);
 

@@ -44,3 +44,17 @@ export async function ongoingJobForWorker(
 		next(error);
 	}
 }
+
+export async function recentJobsForWorker(
+	req: Request,
+	res: Response,
+	next: NextFunction
+) {
+	try {
+		const { userId } = getAuth(req);
+		const result = await jobService.getRecentJobsForWorker(userId);
+		res.status(200).json(result);
+	} catch (error) {
+		next(error);
+	}
+}
