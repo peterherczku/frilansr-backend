@@ -120,7 +120,7 @@ export async function getRecentJobsForWorker(userId: string) {
 	}
 	const recentJobs = await Jobs.getRecentJobsForWorker(userId);
 	const extendedRecentJobs = await extendFinishedJobs(recentJobs);
-	return extendFinishedJobs;
+	return extendedRecentJobs;
 }
 
 export async function getOngoingJob(userId: string) {
