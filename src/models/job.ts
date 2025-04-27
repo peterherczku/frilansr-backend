@@ -28,6 +28,14 @@ const Jobs = {
 				listing: {
 					userId: userId,
 				},
+				OR: [
+					{
+						status: "WAITING_FOR_WORKER",
+					},
+					{
+						status: "IN_PROGRESS",
+					},
+				],
 			},
 			include: {
 				listing: true,
