@@ -11,6 +11,7 @@ import {
 	getConnectedAccountBankAccounts,
 	setCustomerDefaultPaymetMethod,
 	getOutgoingPayments,
+	getWorkerPaymentHistory,
 } from "../../controllers/stripe/stripe.controller.js";
 
 const router = Router();
@@ -24,6 +25,7 @@ router.get(
 	getConnectedAccountBankAccounts
 );
 router.get("/outgoing-payments", requireAuth, getOutgoingPayments);
+router.get("/payment-history-worker", requireAuth, getWorkerPaymentHistory);
 router.post("/create-connect-account", requireAuth, createConnectAccount);
 router.post("/create-customer-account", requireAuth, createCustomerAccount);
 router.post(

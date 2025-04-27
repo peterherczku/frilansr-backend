@@ -211,3 +211,22 @@ export async function getOutgoingPayments(userId: string) {
 	}));
 	return { outgoingPayments: safe };
 }
+
+export async function getWorkerPaymentHistory(userId: string) {
+	const user = await clerkClient.users.getUser(userId);
+	if (user.publicMetadata.role !== "WORKER") {
+		throw new AppError("You are not a lister", 403);
+	}
+	const stripeId = await Payments.getConnectAccountId(userId);
+	if (!stripeId) {
+		throw new AppError("You don't have a connected account", 400);
+	}
+	const savedTransactions = await Payments.getTransactionsForWorker(userId);
+	const safe = savedTransactions.map((transaction) => ({
+		id: transaction.id,
+		amount: transaction.amount,
+		status: transaction.status,
+		createdAt: transaction.createdAt,
+	}));
+	return { paymentHistory: safe };
+}

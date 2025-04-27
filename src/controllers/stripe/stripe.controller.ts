@@ -135,3 +135,19 @@ export async function getOutgoingPayments(
 		next(error);
 	}
 }
+
+export async function getWorkerPaymentHistory(
+	req: Request,
+	res: Response,
+	next: NextFunction
+) {
+	try {
+		const { userId } = getAuth(req);
+		const outgoingPayments = await stripeService.getWorkerPaymentHistory(
+			userId
+		);
+		res.status(200).json(outgoingPayments);
+	} catch (error) {
+		next(error);
+	}
+}

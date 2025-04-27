@@ -90,4 +90,11 @@ export const Payments = {
 			},
 		});
 	},
+	async getTransactionsForWorker(userId: string) {
+		return await prisma.transaction.findMany({
+			where: {
+				workerId: userId,
+			},
+		});
+	},
 };
