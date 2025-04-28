@@ -178,6 +178,11 @@ export async function sendSeen(userId: string, body: any) {
 	});
 }
 
+export async function unseenMessagesCount(userId: string) {
+	const count = await Messages.getUnseenMessagesCount(userId);
+	return count;
+}
+
 async function reduceConversation(
 	userId: string,
 	conversation: ConversationWithLastMessageAndParticipants

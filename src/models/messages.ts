@@ -143,6 +143,34 @@ const Messages = {
 		});
 		return seenAt;
 	},
+	async getUnseenMessagesCount(userId: string) {
+		const parts = await prisma.conversationParticipant.findMany({
+			where: {
+				userId,
+				conversation: {
+					status: "ACTIVE",
+				},
+			},
+			select: {
+				conversationId: true,
+				lastSeenAt: true,
+			},
+		});
+
+		const counts = await Promise.all(
+			parts.map(({ conversationId, lastSeenAt }) =>
+				prisma.message.count({
+					where: {
+						conversationId,
+						senderId: { not: userId },
+						sentAt: { gt: lastSeenAt ?? new Date(0) },
+					},
+				})
+			)
+		);
+
+		return counts.reduce((sum, c) => sum + c, 0);
+	},
 };
 
 export { Messages };

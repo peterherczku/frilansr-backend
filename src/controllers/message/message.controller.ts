@@ -78,3 +78,17 @@ export async function getMessages(
 		next(error);
 	}
 }
+
+export async function unseenMessages(
+	req: Request,
+	res: Response,
+	next: NextFunction
+) {
+	try {
+		const { userId } = getAuth(req);
+		const count = await messageService.unseenMessagesCount(userId);
+		res.status(200).json({ count });
+	} catch (error) {
+		next(error);
+	}
+}
